@@ -5,69 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Personal Chennai commute weather via Porur Bypass: Velachery home to MSC IT Park Ambattur. Free Open-Meteo, refreshes every 10 minutes."
+      content="Personal two-way Chennai commute weather: Velachery to MSC IT Park Ambattur via Koyambedu, Porur Bypass, or DLF. Free Open-Meteo, premium UI."
     />
     <meta name="theme-color" content="#0b1220" />
-    <title>Chennai Route Weather · Via Porur Bypass</title>
+    <title>Chennai Route Weather · Velachery ↔ MSC Ambattur</title>
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌧️%3C/text%3E%3C/svg%3E" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌧️%3C/text%3E%3C/svg%3E"
+    />
   </head>
-  <body>
+  <body data-scene="cloud" data-day="day">
+    <!-- 3D-style weather stage (CSS only, free) -->
+    <div class="weather-scene" id="weather-scene" aria-hidden="true">
+      <div class="sky-gradient"></div>
+      <div class="sun-orb"></div>
+      <div class="moon-orb"></div>
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="cloud c3"></div>
+      <div class="rain-layer"></div>
+      <div class="storm-flash"></div>
+      <div class="fog-layer"></div>
+      <div class="heat-haze"></div>
+      <div class="ground-glow"></div>
+    </div>
+
     <div class="app">
-      <header class="top">
+      <header class="top glass-bar">
         <div class="brand">
           <h1>Chennai Route Weather</h1>
-          <p>Velachery → <strong>Porur Bypass</strong> → MSC IT Park, Ambattur</p>
+          <p>
+            <strong>Velachery</strong> ↔ <strong>MSC IT Park, Ambattur</strong>
+          </p>
         </div>
-        <div class="actions">
-          <button type="button" id="jump-porur" title="Jump to Porur Bypass">
-            Porur Bypass
-          </button>
-          <button type="button" id="flip-btn" title="Flip commute direction">
-            Flip direction
-          </button>
-          <button type="button" id="refresh-btn" class="primary">Refresh now</button>
-        </div>
+        <button type="button" id="refresh-btn" class="primary">Refresh</button>
       </header>
+
+      <!-- Route dropdown + two-way controls -->
+      <section class="controls glass" aria-label="Route controls">
+        <label class="field">
+          <span class="field-label">Choose route</span>
+          <select id="route-select" class="route-select" aria-label="Select commute route">
+            <!-- filled by app.js -->
+          </select>
+        </label>
+
+        <div class="field">
+          <span class="field-label">Two-way direction</span>
+          <div class="dir-toggle" role="group" aria-label="Commute direction">
+            <button type="button" id="dir-home" class="dir-btn active">
+              Home → Office
+            </button>
+            <button type="button" id="dir-office" class="dir-btn">
+              Office → Home
+            </button>
+          </div>
+        </div>
+
+        <p class="control-hint">
+          Dropdown switches full stop list: <strong>Koyambedu</strong>,
+          <strong>Porur Bypass</strong>, or <strong>DLF</strong> corridor.
+        </p>
+      </section>
 
       <div class="status-row">
         <span id="status" data-kind="loading">Starting…</span>
-        <span id="countdown">Next refresh in —</span>
-        <span class="route-chip" id="route-chip">Via Porur Bypass</span>
+        <span id="countdown">Next refresh —</span>
+        <span class="scene-label" id="scene-label">Live sky</span>
       </div>
 
-      <section class="banner tone-ok" id="banner" aria-live="polite">
+      <div class="hero-stats">
+        <div class="comfort-ring" id="comfort-ring" style="--p: 0">
+          <span class="ring-val">—</span>
+          <span class="ring-lbl">Comfort</span>
+        </div>
+        <div class="sun-times" id="sun-times"></div>
+      </div>
+
+      <section class="banner glass tone-ok" id="banner" aria-live="polite">
         <h2 id="headline">Loading route weather…</h2>
-        <div id="summary-meta">Connecting to free Open-Meteo forecast…</div>
+        <div id="summary-meta">Connecting to free Open-Meteo…</div>
       </section>
 
-      <section class="focus-card" id="focus-card" aria-label="Porur Bypass focus" hidden></section>
-
+      <section class="leave-card glass" id="leave-card" hidden></section>
+      <section class="focus-card glass" id="focus-card" hidden></section>
+      <section class="compare" id="compare" aria-label="Compare routes"></section>
       <section class="tips" id="tips" aria-label="Commute tips"></section>
 
-      <div class="direction">
-        Showing: <strong id="direction">Home → Office via Porur Bypass (morning)</strong>
+      <div class="direction-line">
+        Showing: <strong id="direction">Velachery → MSC IT Park</strong>
       </div>
 
-      <main class="route" id="route" aria-label="Commute stops weather"></main>
+      <main class="route" id="route" aria-label="Selected route stops"></main>
 
-      <footer class="footer">
+      <footer class="footer glass">
         <p>
-          Personal use · Live data from
+          Personal use ·
           <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank"
             >Open-Meteo</a
           >
-          (free, no API key). Auto-refresh every <strong>10 minutes</strong>.
+          (free, no API key) · Auto-refresh <strong>10 min</strong>
         </p>
         <p>
-          Route: Velachery → Guindy → <strong>Porur Bypass</strong> → Vanagaram →
-          Ambattur → MSC IT Park. Approximate public map points for personal use.
+          Premium-style features (route compare, comfort score, smart leave,
+          3D sky scenes) — <strong>all free</strong>, no subscriptions.
         </p>
         <p>
-          Run locally: open <code>index.html</code> via a static server, or
-          double-click if your browser allows ES modules over
-          <code>file://</code> (prefer a local server).
+          Routes are approximate public map points for personal commuting only.
         </p>
       </footer>
     </div>

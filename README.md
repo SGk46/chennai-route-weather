@@ -1,70 +1,60 @@
 # Chennai Route Weather
 
-Personal commute weather for **Chennai** via **Porur Bypass**:
+Personal **two-way** commute weather for Chennai:
 
-| End | Place |
-|-----|--------|
+| | Place |
+|--|--------|
 | **Home** | Velachery |
-| **Key stretch** | Porur Bypass |
-| **Office** | MSC IT Park, Ambattur |
+| **Destination** | MSC IT Park, Ambattur |
 
-Shows **live conditions along the route** (home → Guindy → Porur Bypass → Vanagaram → Ambattur → office): rain, hot sun, storms, temperature, humidity, wind, UV, and next-hour rain chance.
+Pick a corridor from the **dropdown** — each shows its own stop list:
 
-**Auto-refreshes every 10 minutes.**
+| Route | Path |
+|--------|------|
+| **Koyambedu** | Velachery → Guindy → Vadapalani → Koyambedu → Ambattur → MSC |
+| **Porur Bypass** | Velachery → Guindy → Porur Bypass → Vanagaram → Ambattur → MSC |
+| **DLF** | Velachery → Guindy → DLF Ramapuram → Porur → Ambattur → MSC |
 
-## Cost & data
+**Home → Office** and **Office → Home** both supported.
+
+**Auto-refresh every 10 minutes.**
+
+## Free only (no paid APIs)
 
 | Item | Detail |
 |------|--------|
-| Weather API | [Open-Meteo](https://open-meteo.com/) — free, open-source, **no API key** |
-| App stack | Static HTML + CSS + vanilla JS (ES modules) |
-| Hosting | Local browser, or any free static host |
-| Paid services | **None** |
+| Weather | [Open-Meteo](https://open-meteo.com/) — free, no API key |
+| Stack | Static HTML + CSS + vanilla JS |
+| Cost | **₹0** — no subscriptions |
 
-Open-Meteo terms: free for non-commercial use; attribution required (shown in the app footer).
+## “Premium-style” features (all free)
 
-## Features
-
-- Route via **Porur Bypass** (highlighted key stretch + jump button)
-- Focus card for Porur Bypass (rain now / next wet risk / road tip)
-- Commute tips (umbrella, heat, UV, storm) from live conditions
-- Stops: Velachery → Guindy → Porur Bypass → Vanagaram → Ambattur → MSC IT Park
-- Headline summary (rain now / rain soon / hot sun / storm risk)
-- Per-stop: temperature, feels-like, humidity, wind, UV, WMO condition
-- Next hours rain probability per stop
-- Flip direction (morning / evening); preference saved in the browser
-- Manual refresh + 10-minute live countdown
-- Mobile-friendly dark UI
+- Route **dropdown** with full stop lists per corridor  
+- **Two-way** direction toggle (saved in browser)  
+- **Route compare** cards + “best right now”  
+- **Comfort score** (0–100) for the selected path  
+- **Smart leave** window from hourly rain  
+- **3D-style weather sky** (sun, clouds, rain, storm, fog — CSS only)  
+- Glass UI, focus card, commute tips  
+- Sunrise / sunset  
 
 ## Run locally
 
-ES modules need a simple HTTP server (recommended):
-
 ```powershell
 cd C:\Users\Gowtham\Source\Repos\Grok
-
-# Python 3
 python -m http.server 8080
-
-# Or Node (if installed)
-npx --yes serve -l 8080
 ```
 
-Open: [http://localhost:8080](http://localhost:8080)
+Open [http://localhost:8080](http://localhost:8080)
 
 ## Customize
 
-Edit `js/config.js`:
-
-- `STOPS` — names and lat/lon for home, route, office  
-- `APP.refreshMs` — default `10 * 60 * 1000` (10 minutes)
-
-Coordinates are approximate public map points for personal use.
+Edit `js/config.js` → `ROUTES` for stops/lat-lon, or `APP.refreshMs` for refresh interval.
 
 ## Privacy
 
-Private personal project. No accounts, no tracking, no backend. The browser only calls Open-Meteo’s public forecast API with the coordinates you configure.
+No accounts, no tracking backend. Browser calls Open-Meteo with configured coordinates only.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Weather data © Open-Meteo contributors / underlying models as attributed by Open-Meteo.
+MIT — see [LICENSE](LICENSE). Weather data via Open-Meteo (attribution in app).
