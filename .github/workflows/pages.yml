@@ -1,0 +1,48 @@
+# Free static hosting via GitHub Pages (Actions).
+# One-time setup: Repo → Settings → Pages → Build and deployment → Source: GitHub Actions
+#
+# Free-plan note: GitHub Pages is free for *public* repos. Private-repo Pages needs GitHub Pro.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare static site
+        run: |
+          mkdir -p _site
+          cp index.html manifest.webmanifest LICENSE README.md _site/
+          cp -r css js _site/
+          touch _site/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

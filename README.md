@@ -61,6 +61,30 @@ python -m http.server 8080
 
 Open [http://localhost:8080](http://localhost:8080)
 
+## Publish free with GitHub Pages
+
+Your app is static HTML/CSS/JS — perfect for **free** GitHub Pages.
+
+| Plan | Public repo | Private repo |
+|------|-------------|--------------|
+| GitHub Free | Pages **free** | Pages needs **GitHub Pro** |
+| GitHub Pro | Free | Free |
+
+### Enable (about 1 minute)
+
+1. Open the repo: https://github.com/SGk46/chennai-route-weather  
+2. If you want **zero cost** and the site can be public:  
+   **Settings → General → Danger Zone → Change visibility → Public**  
+   (code will be visible; weather still free Open-Meteo)  
+3. **Settings → Pages → Build and deployment → Source: GitHub Actions**  
+4. Push to `master` (or run the **Deploy to GitHub Pages** workflow under **Actions**).
+
+Site URL (after deploy succeeds):
+
+**https://sgk46.github.io/chennai-route-weather/**
+
+A workflow is already in `.github/workflows/pages.yml`.
+
 ## Customize
 
 Edit `js/config.js` → `ROUTES` for stops/lat-lon, or `APP.refreshMs` for refresh interval.
