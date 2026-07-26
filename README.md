@@ -25,6 +25,19 @@ Two-way: **Home → Office** / **Office → Home**. Auto-refresh **10 minutes**.
 | Stack | Static HTML + CSS + vanilla JS |
 | Cost | **₹0** — no subscriptions |
 
+## Mobile + desktop versions
+
+One app, two layouts (switch anytime):
+
+| Layout | When | UI |
+|--------|------|-----|
+| **Mobile** | Phone / narrow, or force **M** | Bottom tabs, centered cockpit (~440px) |
+| **Desktop** | Wide screen, or force **D** | Full-page dashboard, left sidebar, multi-column |
+| **Auto** | Default | ≥900px → desktop, else mobile |
+
+Toggle: **A / M / D** in the header (mobile) or **Layout** in the sidebar (desktop).  
+Or URL: `?layout=mobile` · `?layout=desktop` · `?layout=auto`
+
 ## Navigation
 
 | Tab | What’s there |

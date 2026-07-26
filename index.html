@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
-      content="Chennai commute cockpit: Velachery to MSC IT Park. Path map, route compare, free Open-Meteo."
+      content="Chennai commute weather — mobile cockpit and full-page desktop. Velachery to MSC IT Park. Free Open-Meteo."
     />
     <meta name="theme-color" content="#0c1a2e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -23,105 +23,166 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='12' fill='%23F0A830'/%3E%3Cpath fill='%237EB8E8' d='M18 40c0-6 4.5-10 10.5-10 1.2 0 2.4.2 3.5.6A9 9 0 0 1 48 40H18z'/%3E%3C/svg%3E"
     />
   </head>
-  <body data-scene="cloud" data-day="day" data-page="now">
+  <body data-scene="cloud" data-day="day" data-page="now" data-viewport="mobile" data-layout="auto">
     <div class="sky" id="sky" aria-hidden="true">
       <div class="sky-wash"></div>
       <div class="sky-orb"></div>
     </div>
 
     <div class="shell">
-      <header class="topbar">
-        <div class="topbar-text">
-          <p class="kicker">Chennai commute</p>
-          <h1 id="page-title">Now</h1>
+      <!-- Desktop sidebar -->
+      <aside class="sidebar" aria-label="Desktop navigation">
+        <div class="sidebar-brand">
+          <div class="brand-mark" id="brand-icon" aria-hidden="true"></div>
+          <div>
+            <p class="kicker">Chennai commute</p>
+            <strong>Velachery ↔ MSC</strong>
+          </div>
         </div>
-        <div class="topbar-actions">
-          <span class="live" id="status" data-kind="loading">…</span>
-          <button type="button" id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh"></button>
+        <nav class="side-nav">
+          <button type="button" class="side-link active" data-nav="now">
+            <span class="tab-ico" data-ico="now"></span>
+            <span>Now</span>
+          </button>
+          <button type="button" class="side-link" data-nav="routes">
+            <span class="tab-ico" data-ico="routes"></span>
+            <span>Routes</span>
+          </button>
+          <button type="button" class="side-link" data-nav="more">
+            <span class="tab-ico" data-ico="more"></span>
+            <span>More</span>
+          </button>
+        </nav>
+        <div class="sidebar-foot">
+          <p class="layout-label">Layout</p>
+          <div class="layout-switch" role="group" aria-label="Layout version">
+            <button type="button" class="layout-btn" data-layout-set="auto">Auto</button>
+            <button type="button" class="layout-btn" data-layout-set="mobile">Mobile</button>
+            <button type="button" class="layout-btn" data-layout-set="desktop">Desktop</button>
+          </div>
+          <p class="sidebar-hint">Desktop = full page · Mobile = phone cockpit</p>
         </div>
-      </header>
+      </aside>
 
-      <main class="content" id="app-main">
-        <!-- NOW -->
-        <section class="page is-active" id="page-now" data-page="now">
-          <p class="route-line" id="route-line">Velachery → MSC IT Park</p>
-
-          <article class="card path-card">
-            <div class="path-head">
-              <span class="path-label" id="path-label">Your path</span>
-              <span class="path-legend">
-                <i class="leg ok"></i>OK
-                <i class="leg hot"></i>Hot
-                <i class="leg rain"></i>Rain
-              </span>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="topbar-text">
+            <p class="kicker mobile-only">Chennai commute</p>
+            <h1 id="page-title">Now</h1>
+            <p class="topbar-sub" id="page-sub">Live path weather</p>
+          </div>
+          <div class="topbar-actions">
+            <div class="layout-switch mobile-layout-switch" role="group" aria-label="Layout version">
+              <button type="button" class="layout-btn" data-layout-set="auto" title="Auto">A</button>
+              <button type="button" class="layout-btn" data-layout-set="mobile" title="Mobile">M</button>
+              <button type="button" class="layout-btn" data-layout-set="desktop" title="Desktop">D</button>
             </div>
-            <div class="path-map" id="path-map" aria-label="Route path map"></div>
-          </article>
+            <span class="live" id="status" data-kind="loading">…</span>
+            <button type="button" id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh"></button>
+          </div>
+        </header>
 
-          <div class="now-grid">
-            <article class="card comfort-card" id="comfort-card">
-              <span class="card-kicker">Comfort</span>
-              <div class="comfort-big" id="comfort-val">—</div>
-              <p class="card-sub" id="comfort-sub">Loading…</p>
-            </article>
-            <article class="card hero-wx" id="hero-wx">
-              <div class="hero-icon" id="banner-icon"></div>
-              <div>
-                <h2 id="headline">Loading…</h2>
-                <p id="hero-meta" class="card-sub">Open-Meteo</p>
+        <main class="content" id="app-main">
+          <!-- NOW -->
+          <section class="page is-active" id="page-now" data-page="now">
+            <p class="route-line" id="route-line">Velachery → MSC IT Park</p>
+
+            <div class="now-layout">
+              <div class="now-primary">
+                <article class="card path-card">
+                  <div class="path-head">
+                    <span class="path-label" id="path-label">Your path</span>
+                    <span class="path-legend">
+                      <i class="leg ok"></i>OK
+                      <i class="leg hot"></i>Hot
+                      <i class="leg rain"></i>Rain
+                    </span>
+                  </div>
+                  <div class="path-map" id="path-map" aria-label="Route path map"></div>
+                </article>
+
+                <div class="now-grid">
+                  <article class="card comfort-card" id="comfort-card">
+                    <span class="card-kicker">Comfort</span>
+                    <div class="comfort-big" id="comfort-val">—</div>
+                    <p class="card-sub" id="comfort-sub">Loading…</p>
+                  </article>
+                  <article class="card hero-wx" id="hero-wx">
+                    <div class="hero-icon" id="banner-icon"></div>
+                    <div>
+                      <h2 id="headline">Loading…</h2>
+                      <p id="hero-meta" class="card-sub">Open-Meteo</p>
+                    </div>
+                  </article>
+                </div>
               </div>
-            </article>
-          </div>
 
-          <article class="card leave-card" id="leave-card" hidden></article>
-          <article class="card focus-card" id="focus-card" hidden></article>
+              <div class="now-secondary">
+                <article class="card leave-card" id="leave-card" hidden></article>
+                <article class="card focus-card" id="focus-card" hidden></article>
 
-          <div class="action-row">
-            <button type="button" class="btn primary" data-go="routes" id="btn-change-route">Change route</button>
-            <button type="button" class="btn ghost" data-go="more" id="btn-all-stops">All stops</button>
-          </div>
+                <div class="action-row">
+                  <button type="button" class="btn primary" data-go="routes" id="btn-change-route">
+                    Change route
+                  </button>
+                  <button type="button" class="btn ghost" data-go="more" id="btn-all-stops">
+                    All stops
+                  </button>
+                </div>
 
-          <div class="meta-row" id="sun-times"></div>
-          <p class="countdown" id="countdown">Next refresh —</p>
-        </section>
-
-        <!-- ROUTES -->
-        <section class="page" id="page-routes" data-page="routes" hidden>
-          <article class="card">
-            <span class="card-kicker">Direction</span>
-            <div class="dir-toggle" role="group" aria-label="Direction">
-              <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
-              <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
+                <div class="meta-row" id="sun-times"></div>
+                <p class="countdown" id="countdown">Next refresh —</p>
+              </div>
             </div>
-          </article>
+          </section>
 
-          <p class="section-note" id="routes-note">Tap a corridor to select it for your path.</p>
-          <div class="route-cards" id="compare" aria-label="Route compare"></div>
-        </section>
+          <!-- ROUTES -->
+          <section class="page" id="page-routes" data-page="routes" hidden>
+            <div class="routes-layout">
+              <article class="card routes-dir-card">
+                <span class="card-kicker">Direction</span>
+                <div class="dir-toggle" role="group" aria-label="Direction">
+                  <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
+                  <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
+                </div>
+                <p class="section-note" id="routes-note">Tap a corridor to select it for your path.</p>
+              </article>
+              <div class="route-cards" id="compare" aria-label="Route compare"></div>
+            </div>
+          </section>
 
-        <!-- MORE -->
-        <section class="page" id="page-more" data-page="more" hidden>
-          <article class="card intro-card" id="stops-intro"></article>
+          <!-- MORE -->
+          <section class="page" id="page-more" data-page="more" hidden>
+            <article class="card intro-card" id="stops-intro"></article>
 
-          <h3 class="section-title">Stops on path</h3>
-          <div class="route" id="route" aria-label="Stops"></div>
+            <div class="more-layout">
+              <div class="more-col">
+                <h3 class="section-title">Stops on path</h3>
+                <div class="route" id="route" aria-label="Stops"></div>
+              </div>
+              <div class="more-col sticky-col">
+                <h3 class="section-title">Tips</h3>
+                <div id="tips" class="tips"></div>
+                <article class="card about-card">
+                  <h3>About</h3>
+                  <p>
+                    Personal commute weather · Velachery ↔ MSC IT Park, Ambattur · free
+                    <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>
+                    data (no API key). Auto-refresh every 10 minutes.
+                  </p>
+                  <p class="muted">
+                    <strong>Mobile</strong> = phone cockpit · <strong>Desktop</strong> = full-page dashboard.
+                    Use Auto / M / D in the header to switch.
+                  </p>
+                </article>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
 
-          <h3 class="section-title">Tips</h3>
-          <div id="tips" class="tips"></div>
-
-          <article class="card about-card">
-            <h3>About</h3>
-            <p>
-              Personal commute weather · Velachery ↔ MSC IT Park, Ambattur · free
-              <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>
-              data (no API key). Auto-refresh every 10 minutes.
-            </p>
-            <p class="muted">Approximate map points for personal use only.</p>
-          </article>
-        </section>
-      </main>
-
-      <nav class="tabbar" aria-label="Main">
+      <!-- Mobile bottom tabs -->
+      <nav class="tabbar" aria-label="Mobile navigation">
         <button type="button" class="tab active" data-nav="now" aria-current="page">
           <span class="tab-ico" data-ico="now"></span>
           <span>Now</span>

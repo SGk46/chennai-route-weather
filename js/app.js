@@ -56,11 +56,50 @@ const prefs = loadPrefs();
 let routeId = ROUTES[prefs.routeId] ? prefs.routeId : "porur";
 let reverseRoute = !!prefs.reverseRoute;
 let currentPage = PAGES[prefs.page] ? prefs.page : "now";
+/** auto | mobile | desktop — user preference */
+let layoutPref = ["auto", "mobile", "desktop"].includes(prefs.layout)
+  ? prefs.layout
+  : "auto";
 let lastPayload = null;
 let lastCompare = null;
 let timerId = null;
 let countdownId = null;
 let nextRefreshAt = 0;
+
+const DESKTOP_MQ = window.matchMedia("(min-width: 900px)");
+const PAGE_SUB = {
+  now: "Live path weather · Velachery ↔ MSC",
+  routes: "Compare corridors · pick one for your path",
+  more: "Stops, hourly detail, tips & about",
+};
+
+/* ---------- Viewport: mobile cockpit vs full-page desktop ---------- */
+
+function resolveViewport() {
+  if (layoutPref === "mobile") return "mobile";
+  if (layoutPref === "desktop") return "desktop";
+  return DESKTOP_MQ.matches ? "desktop" : "mobile";
+}
+
+function applyViewport() {
+  const vp = resolveViewport();
+  document.body.dataset.viewport = vp;
+  document.body.dataset.layout = layoutPref;
+
+  $$("[data-layout-set]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.layoutSet === layoutPref);
+  });
+
+  // re-render path at desktop scale when data exists
+  if (lastPayload) renderPathMap(lastPayload);
+}
+
+function setLayoutPref(mode) {
+  if (!["auto", "mobile", "desktop"].includes(mode)) return;
+  layoutPref = mode;
+  savePrefs({ layout: mode });
+  applyViewport();
+}
 
 /* ---------- Navigation ---------- */
 
@@ -80,7 +119,7 @@ function navigate(page, { push = true } = {}) {
     el.classList.toggle("is-active", on);
   });
 
-  $$(".tab").forEach((btn) => {
+  $$(".tab, .side-link").forEach((btn) => {
     const on = btn.dataset.nav === page;
     btn.classList.toggle("active", on);
     if (on) btn.setAttribute("aria-current", "page");
@@ -88,6 +127,8 @@ function navigate(page, { push = true } = {}) {
   });
 
   els.pageTitle.textContent = PAGES[page].title;
+  const sub = $("#page-sub");
+  if (sub) sub.textContent = PAGE_SUB[page] || "";
 
   if (push) {
     history.replaceState({ page }, "", `${location.pathname}${location.search}#${page}`);
@@ -168,10 +209,11 @@ function applyScene(summary) {
 function renderPathMap(data) {
   const stops = reverseRoute ? [...data.stops].reverse() : data.stops;
   const n = stops.length;
-  const W = 360;
-  const H = 118;
-  const padX = 28;
-  const y = 48;
+  const desktop = document.body.dataset.viewport === "desktop";
+  const W = desktop ? 720 : 360;
+  const H = desktop ? 168 : 118;
+  const padX = desktop ? 40 : 28;
+  const y = desktop ? 72 : 48;
   const span = W - padX * 2;
   const xs = stops.map((_, i) => padX + (n === 1 ? span / 2 : (span * i) / (n - 1)));
 
@@ -192,14 +234,17 @@ function renderPathMap(data) {
         mid: "#7a90a8",
       };
       const fill = colors[cls] || colors.mid;
-      const r = s.role === "home" || s.role === "office" || s.focus ? 9 : 7;
-      const short =
-        s.name.length > 10 ? s.name.slice(0, 9) + "…" : s.name;
+      const r = s.role === "home" || s.role === "office" || s.focus ? (desktop ? 11 : 9) : desktop ? 8 : 7;
+      const short = desktop
+        ? s.name
+        : s.name.length > 10
+          ? s.name.slice(0, 9) + "…"
+          : s.name;
       return `
       <g class="path-node" transform="translate(${xs[i]},${y})">
         <circle class="pin" r="${r}" fill="${fill}" />
-        <text class="name" y="-16">${short}</text>
-        <text class="temp" y="26">${s.temp.toFixed(0)}°</text>
+        <text class="name" y="${desktop ? -20 : -16}">${short}</text>
+        <text class="temp" y="${desktop ? 30 : 26}">${s.temp.toFixed(0)}°</text>
       </g>`;
     })
     .join("");
@@ -535,14 +580,19 @@ async function loadAll({ silent = false } = {}) {
 /* ---------- Wire ---------- */
 
 function wireUi() {
+  applyViewport();
+
   els.refreshBtn.innerHTML = ui.refresh();
   els.dirHome.innerHTML = `${ui.home()}<span>Home → Office</span>`;
   els.dirOffice.innerHTML = `${ui.building()}<span>Office → Home</span>`;
 
-  $$(".tab").forEach((btn) => {
+  const brand = $("#brand-icon");
+  if (brand) brand.innerHTML = weatherIcon("partly", { size: "sm" });
+
+  const iconMap = { now: ui.spark(), routes: ui.route(), more: ui.list() };
+  $$(".tab, .side-link").forEach((btn) => {
     const ico = btn.querySelector(".tab-ico");
-    const map = { now: ui.spark(), routes: ui.route(), more: ui.list() };
-    if (ico) ico.innerHTML = map[btn.dataset.nav] || ui.grid();
+    if (ico) ico.innerHTML = iconMap[btn.dataset.nav] || ui.grid();
     btn.addEventListener("click", () => navigate(btn.dataset.nav));
   });
 
@@ -550,7 +600,10 @@ function wireUi() {
     btn.addEventListener("click", () => navigate(btn.dataset.go));
   });
 
-  // enhance action buttons with icons
+  $$("[data-layout-set]").forEach((btn) => {
+    btn.addEventListener("click", () => setLayoutPref(btn.dataset.layoutSet));
+  });
+
   const ch = $("#btn-change-route");
   const st = $("#btn-all-stops");
   if (ch) ch.innerHTML = `${ui.route()} Change route`;
@@ -562,6 +615,17 @@ function wireUi() {
   window.addEventListener("hashchange", () => {
     navigate(pageFromHash(), { push: false });
   });
+
+  // Auto mode follows window size
+  const onMq = () => {
+    if (layoutPref === "auto") applyViewport();
+  };
+  if (DESKTOP_MQ.addEventListener) DESKTOP_MQ.addEventListener("change", onMq);
+  else DESKTOP_MQ.addListener(onMq);
+
+  // URL helpers: ?layout=mobile|desktop|auto
+  const q = new URLSearchParams(location.search).get("layout");
+  if (q && ["auto", "mobile", "desktop"].includes(q)) setLayoutPref(q);
 
   els.dirHome.addEventListener("click", () => {
     reverseRoute = false;
