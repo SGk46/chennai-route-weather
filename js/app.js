@@ -12,13 +12,18 @@ const els = {
   banner: $("#banner"),
   refreshBtn: $("#refresh-btn"),
   direction: $("#direction"),
+  focusCard: $("#focus-card"),
+  tips: $("#tips"),
+  routeChip: $("#route-chip"),
 };
+
+const STORAGE_KEY = "chennai-route-weather:v2";
 
 let lastPayload = null;
 let timerId = null;
 let countdownId = null;
 let nextRefreshAt = 0;
-let reverseRoute = false;
+let reverseRoute = loadPrefs().reverseRoute ?? false;
 
 const ICONS = {
   sun: "☀️",
@@ -32,6 +37,19 @@ const ICONS = {
   snow: "❄️",
   storm: "⛈️",
 };
+
+function loadPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function savePrefs(partial) {
+  const next = { ...loadPrefs(), ...partial };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+}
 
 function setStatus(text, kind = "ok") {
   els.status.textContent = text;
@@ -77,32 +95,106 @@ function renderSummary(data) {
 
   const rainy =
     summary.rainyStops.length > 0
-      ? ` · Watch: ${summary.rainyStops.join(", ")}`
+      ? `Watch: ${summary.rainyStops.join(", ")}`
       : "";
 
   els.summaryMeta.innerHTML = `
     <span>Home ${summary.homeTemp?.toFixed(1) ?? "—"}°C</span>
+    <span class="dot">→</span>
+    <span class="focus-inline">${summary.focusName} ${summary.focusTemp?.toFixed(1) ?? "—"}°C</span>
     <span class="dot">→</span>
     <span>Office ${summary.officeTemp?.toFixed(1) ?? "—"}°C</span>
     <span class="sep">·</span>
     <span>Route ${summary.minTemp.toFixed(0)}–${summary.maxTemp.toFixed(0)}°C</span>
     <span class="sep">·</span>
     <span>Updated ${formatTime(fetchedAt)}</span>
-    ${rainy ? `<span class="sep">·</span><span class="warn">${rainy.replace(/^ · /, "")}</span>` : ""}
+    ${rainy ? `<span class="sep">·</span><span class="warn">${rainy}</span>` : ""}
+  `;
+}
+
+function renderFocusCard(data) {
+  const stop =
+    data.stops.find((s) => s.id === APP.focusStopId) ||
+    data.stops.find((s) => s.focus);
+  if (!stop || !els.focusCard) return;
+
+  const badge = badgeFor(stop);
+  const icon = ICONS[stop.icon] || "🛣️";
+  const nextRain = stop.hourly.find(
+    (h) => (h.pop ?? 0) >= 40 || (h.rain ?? 0) > 0 || (h.precip ?? 0) > 0.1
+  );
+
+  els.focusCard.hidden = false;
+  els.focusCard.innerHTML = `
+    <div class="focus-top">
+      <div>
+        <span class="role-pill focus-pill">Your path · Key stretch</span>
+        <h2>${icon} ${stop.name}</h2>
+        <p class="area">${stop.area}</p>
+      </div>
+      <div class="stop-main">
+        <span class="temp">${stop.temp.toFixed(1)}°</span>
+      </div>
+    </div>
+    <div class="stop-meta">
+      <span class="badge ${badge.cls}">${badge.text}</span>
+      <span>${stop.text}</span>
+      <span>Feels ${stop.feelsLike.toFixed(0)}°</span>
+      <span>Wind ${stop.wind.toFixed(0)} km/h</span>
+      <span>Humidity ${stop.humidity}%</span>
+      ${
+        stop.rainNow
+          ? `<span class="rain-amt">Rain ${stop.rain.toFixed(1)} mm now</span>`
+          : ""
+      }
+      ${
+        nextRain && !stop.rainNow
+          ? `<span class="rain-amt">Next wet risk ~${formatHour(nextRain.time)} (${nextRain.pop ?? "—"}%)</span>`
+          : ""
+      }
+    </div>
+    ${
+      stop.tip
+        ? `<p class="focus-tip">${stop.tip}</p>`
+        : ""
+    }
+  `;
+}
+
+function renderTips(data) {
+  if (!els.tips) return;
+  const tips = data.tips || [];
+  els.tips.innerHTML = `
+    <h3 class="tips-title">Commute tips</h3>
+    <ul class="tips-list">
+      ${tips
+        .map(
+          (t) => `
+        <li class="tip level-${t.level}">
+          <span class="tip-icon" aria-hidden="true">${t.icon}</span>
+          <span>${t.text}</span>
+        </li>`
+        )
+        .join("")}
+    </ul>
   `;
 }
 
 function renderRoute(data) {
   const stops = reverseRoute ? [...data.stops].reverse() : data.stops;
   const dirLabel = reverseRoute
-    ? "Office → Home (evening)"
-    : "Home → Office (morning)";
+    ? "Office → Home via Porur Bypass (evening)"
+    : "Home → Office via Porur Bypass (morning)";
   els.direction.textContent = dirLabel;
+  if (els.routeChip) {
+    els.routeChip.textContent = "Via Porur Bypass";
+  }
 
   els.route.innerHTML = stops
     .map((stop, idx) => {
       const badge = badgeFor(stop);
       const icon = ICONS[stop.icon] || "🌡️";
+      const isFocus = stop.id === APP.focusStopId || stop.focus;
       const hours = stop.hourly
         .slice(0, 5)
         .map(
@@ -117,7 +209,7 @@ function renderRoute(data) {
         .join("");
 
       return `
-      <article class="stop role-${stop.role} tag-${stop.tag}" data-id="${stop.id}">
+      <article class="stop role-${stop.role} tag-${stop.tag}${isFocus ? " is-focus" : ""}" data-id="${stop.id}" id="stop-${stop.id}">
         <div class="stop-rail">
           <div class="rail-dot"></div>
           ${idx < stops.length - 1 ? '<div class="rail-line"></div>' : ""}
@@ -147,6 +239,11 @@ function renderRoute(data) {
                 : ""
             }
           </div>
+          ${
+            stop.tip && isFocus
+              ? `<p class="focus-tip inline-tip">${stop.tip}</p>`
+              : ""
+          }
           <div class="hourly" aria-label="Next hours">
             <div class="hour head">
               <span class="h-time">Time</span>
@@ -186,8 +283,10 @@ async function loadWeather({ silent = false } = {}) {
     const data = await fetchRouteWeather();
     lastPayload = data;
     renderSummary(data);
+    renderFocusCard(data);
+    renderTips(data);
     renderRoute(data);
-    setStatus("Live · Open-Meteo (free)", "ok");
+    setStatus("Live · Open-Meteo (free) · Porur Bypass route", "ok");
     scheduleRefresh();
   } catch (err) {
     console.error(err);
@@ -195,7 +294,6 @@ async function loadWeather({ silent = false } = {}) {
       err?.message || "Could not load weather. Check internet and retry.",
       "error"
     );
-    // Retry sooner on failure
     clearTimeout(timerId);
     nextRefreshAt = Date.now() + 60_000;
     updateCountdown();
@@ -209,10 +307,18 @@ function wireUi() {
   els.refreshBtn.addEventListener("click", () => loadWeather());
   $("#flip-btn").addEventListener("click", () => {
     reverseRoute = !reverseRoute;
+    savePrefs({ reverseRoute });
     if (lastPayload) renderRoute(lastPayload);
   });
 
-  // Visibility: refresh when tab becomes active if data is stale
+  const jump = $("#jump-porur");
+  if (jump) {
+    jump.addEventListener("click", () => {
+      const el = document.getElementById("stop-porur-bypass");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && Date.now() >= nextRefreshAt) {
       loadWeather({ silent: true });

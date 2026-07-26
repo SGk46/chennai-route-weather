@@ -1,4 +1,4 @@
-import { APP, STOPS, WMO, describeHeat } from "./config.js";
+import { APP, STOPS, WMO, describeHeat, buildCommuteTips } from "./config.js";
 
 function buildUrl() {
   const lats = STOPS.map((s) => s.lat).join(",");
@@ -111,9 +111,11 @@ export async function fetchRouteWeather() {
     };
   });
 
+  const tips = buildCommuteTips(stops);
   return {
     fetchedAt: new Date().toISOString(),
     stops,
+    tips,
     summary: buildSummary(stops),
   };
 }
@@ -121,6 +123,8 @@ export async function fetchRouteWeather() {
 function buildSummary(stops) {
   const home = stops.find((s) => s.role === "home");
   const office = stops.find((s) => s.role === "office");
+  const focus =
+    stops.find((s) => s.id === APP.focusStopId) || stops.find((s) => s.focus);
   const anyRain =
     stops.some((s) => s.rainNow) || stops.some((s) => s.rainingSoon);
   const maxTemp = Math.max(...stops.map((s) => s.temp));
@@ -129,20 +133,26 @@ function buildSummary(stops) {
   const hotSun =
     maxTemp >= 35 || stops.some((s) => s.tag === "hot-sun" && s.temp >= 33);
 
-  let headline = "Clear commute conditions";
+  let headline = "Clear commute via Porur Bypass";
   let tone = "ok";
 
   if (storm) {
-    headline = "Thunderstorm risk along the route";
+    headline = "Thunderstorm risk · watch Porur Bypass";
     tone = "alert";
+  } else if (focus?.rainNow) {
+    headline = "Rain on Porur Bypass right now";
+    tone = "rain";
   } else if (stops.some((s) => s.rainNow)) {
     headline = "Rain on the route right now";
+    tone = "rain";
+  } else if (focus?.rainingSoon) {
+    headline = "Rain likely soon on Porur Bypass";
     tone = "rain";
   } else if (anyRain) {
     headline = "Rain likely soon on the commute";
     tone = "rain";
   } else if (hotSun) {
-    headline = "Hot sun — hydrate & shade if outdoors";
+    headline = "Hot sun on bypass — hydrate & shade";
     tone = "hot";
   }
 
@@ -155,6 +165,11 @@ function buildSummary(stops) {
     tone,
     homeTemp: home?.temp,
     officeTemp: office?.temp,
+    focusTemp: focus?.temp,
+    focusName: focus?.name ?? "Porur Bypass",
+    focusText: focus?.text,
+    focusRainNow: !!focus?.rainNow,
+    focusRainSoon: !!focus?.rainingSoon,
     minTemp,
     maxTemp,
     anyRain,

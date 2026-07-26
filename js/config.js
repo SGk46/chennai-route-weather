@@ -1,7 +1,7 @@
 /**
  * Chennai commute weather — free Open-Meteo (no API key).
  * Home: Velachery · Office: MSC IT Park, Ambattur
- * Route points approximate common Velachery → Ambattur commute corridors.
+ * Primary corridor: via Porur Bypass.
  */
 export const APP = {
   name: "Chennai Route Weather",
@@ -10,10 +10,13 @@ export const APP = {
   refreshMs: 10 * 60 * 1000,
   /** Open-Meteo — free, open-source, no key */
   apiBase: "https://api.open-meteo.com/v1/forecast",
+  /** Highlighted stretch you care about most */
+  focusStopId: "porur-bypass",
 };
 
 /**
  * Stop order = home → route → office (and reverse for evening).
+ * Via Porur Bypass toward Ambattur / MSC IT Park.
  * Coords are approximate public map locations for personal use.
  */
 export const STOPS = [
@@ -36,22 +39,24 @@ export const STOPS = [
     lon: 80.2206,
   },
   {
-    id: "vadapalani",
+    id: "porur-bypass",
     role: "route",
-    name: "Vadapalani",
-    label: "En route",
-    area: "Vadapalani / Arcot Road",
-    lat: 13.0504,
-    lon: 80.2121,
+    name: "Porur Bypass",
+    label: "Key stretch",
+    area: "Porur Bypass Rd · your usual path",
+    lat: 13.0418,
+    lon: 80.1565,
+    focus: true,
+    tip: "Open stretch — rain + wind can hit hard; watch for standing water after heavy rain.",
   },
   {
-    id: "koyambedu",
+    id: "vanagaram",
     role: "route",
-    name: "Koyambedu",
+    name: "Vanagaram",
     label: "En route",
-    area: "Koyambedu / CMBT area",
-    lat: 13.0698,
-    lon: 80.1948,
+    area: "After Porur Bypass → Ambattur side",
+    lat: 13.0625,
+    lon: 80.1528,
   },
   {
     id: "ambattur",
@@ -112,4 +117,88 @@ export function describeHeat(tempC) {
   if (tempC >= 28) return { level: "warm", label: "Warm" };
   if (tempC >= 24) return { level: "pleasant", label: "Pleasant" };
   return { level: "cool", label: "Cool" };
+}
+
+/**
+ * Simple personal checklist from route conditions (no extra APIs).
+ */
+export function buildCommuteTips(stops) {
+  const tips = [];
+  const anyRainNow = stops.some((s) => s.rainNow);
+  const anyRainSoon = stops.some((s) => s.rainingSoon);
+  const storm = stops.some((s) => s.tag === "storm" || s.code >= 95);
+  const maxTemp = Math.max(...stops.map((s) => s.temp));
+  const maxUv = Math.max(...stops.map((s) => s.uv ?? 0));
+  const focus = stops.find((s) => s.id === APP.focusStopId) || stops.find((s) => s.focus);
+
+  if (storm) {
+    tips.push({
+      id: "storm",
+      level: "alert",
+      icon: "⛈️",
+      text: "Thunderstorm risk — delay two-wheeler if you can; keep distance on open roads.",
+    });
+  }
+  if (anyRainNow) {
+    tips.push({
+      id: "rain-now",
+      level: "rain",
+      icon: "🌧️",
+      text: "Rain on route now — umbrella / raincoat, leave extra time for Porur Bypass spray.",
+    });
+  } else if (anyRainSoon) {
+    tips.push({
+      id: "rain-soon",
+      level: "rain",
+      icon: "🌦️",
+      text: "Rain likely in the next few hours — keep a foldable umbrella in the bag.",
+    });
+  }
+  if (maxTemp >= 35) {
+    tips.push({
+      id: "heat",
+      level: "hot",
+      icon: "🥵",
+      text: "Very hot sun — water bottle, sunglasses; avoid long outdoor waits.",
+    });
+  } else if (maxTemp >= 32) {
+    tips.push({
+      id: "warm",
+      level: "hot",
+      icon: "☀️",
+      text: "Hot stretch — light clothes and hydration help on open bypass sections.",
+    });
+  }
+  if (maxUv >= 8) {
+    tips.push({
+      id: "uv",
+      level: "hot",
+      icon: "🧴",
+      text: "High UV — sunscreen if you walk or ride exposed on Porur Bypass.",
+    });
+  }
+  if (focus?.rainNow || focus?.rainingSoon) {
+    tips.push({
+      id: "porur",
+      level: "focus",
+      icon: "🛣️",
+      text: `Porur Bypass: ${focus.text}${focus.rainNow ? " · wet road now" : " · rain risk soon"}.`,
+    });
+  } else if (focus) {
+    tips.push({
+      id: "porur-ok",
+      level: "ok",
+      icon: "🛣️",
+      text: `Porur Bypass looks manageable: ${focus.temp.toFixed(0)}°C, ${focus.text}.`,
+    });
+  }
+  if (tips.length === 0) {
+    tips.push({
+      id: "clear",
+      level: "ok",
+      icon: "✅",
+      text: "No major weather flags on the Velachery → Porur Bypass → Ambattur path.",
+    });
+  }
+  return tips;
 }

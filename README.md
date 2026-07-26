@@ -1,13 +1,14 @@
 # Chennai Route Weather
 
-Personal commute weather for **Chennai**:
+Personal commute weather for **Chennai** via **Porur Bypass**:
 
 | End | Place |
 |-----|--------|
 | **Home** | Velachery |
+| **Key stretch** | Porur Bypass |
 | **Office** | MSC IT Park, Ambattur |
 
-Shows **live conditions along the route** (home → intermediate stops → office): rain, hot sun, storms, temperature, humidity, wind, UV, and next-hour rain chance.
+Shows **live conditions along the route** (home → Guindy → Porur Bypass → Vanagaram → Ambattur → office): rain, hot sun, storms, temperature, humidity, wind, UV, and next-hour rain chance.
 
 **Auto-refreshes every 10 minutes.**
 
@@ -24,11 +25,14 @@ Open-Meteo terms: free for non-commercial use; attribution required (shown in th
 
 ## Features
 
-- Route strip: Velachery → Guindy → Vadapalani → Koyambedu → Ambattur → MSC IT Park
+- Route via **Porur Bypass** (highlighted key stretch + jump button)
+- Focus card for Porur Bypass (rain now / next wet risk / road tip)
+- Commute tips (umbrella, heat, UV, storm) from live conditions
+- Stops: Velachery → Guindy → Porur Bypass → Vanagaram → Ambattur → MSC IT Park
 - Headline summary (rain now / rain soon / hot sun / storm risk)
 - Per-stop: temperature, feels-like, humidity, wind, UV, WMO condition
 - Next hours rain probability per stop
-- Flip direction (morning home→office / evening office→home)
+- Flip direction (morning / evening); preference saved in the browser
 - Manual refresh + 10-minute live countdown
 - Mobile-friendly dark UI
 
