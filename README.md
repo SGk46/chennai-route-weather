@@ -7,7 +7,7 @@ Personal **two-way** commute weather for Chennai:
 | **Home** | Velachery |
 | **Destination** | MSC IT Park, Ambattur |
 
-Pick a corridor from the **dropdown** — each shows its own stop list:
+**Commute cockpit UI:** path map on **Now**, pick corridor on **Routes**, details on **More**.
 
 | Route | Path |
 |--------|------|
@@ -15,9 +15,7 @@ Pick a corridor from the **dropdown** — each shows its own stop list:
 | **Porur Bypass** | Velachery → Guindy → Porur Bypass → Vanagaram → Ambattur → MSC |
 | **DLF** | Velachery → Guindy → DLF Ramapuram → Porur → Ambattur → MSC |
 
-**Home → Office** and **Office → Home** both supported.
-
-**Auto-refresh every 10 minutes.**
+Two-way: **Home → Office** / **Office → Home**. Auto-refresh **10 minutes**.
 
 ## Free only (no paid APIs)
 
@@ -27,30 +25,23 @@ Pick a corridor from the **dropdown** — each shows its own stop list:
 | Stack | Static HTML + CSS + vanilla JS |
 | Cost | **₹0** — no subscriptions |
 
-## App navigation (not one long page)
-
-Bottom tabs keep each screen simple:
+## Navigation
 
 | Tab | What’s there |
 |-----|----------------|
-| **Home** | Live overview, comfort, smart leave, key stretch, shortcuts |
-| **Routes** | Dropdown (Koyambedu / Porur / DLF), two-way direction, compare |
-| **Stops** | Full stop timeline + hourly for the selected route |
-| **Tips** | Commute tips + about |
+| **Now** | Path map (green/hot/rain), comfort, headline, smart leave, key stretch |
+| **Routes** | Direction toggle + 3 corridor cards + Best badge |
+| **More** | Full stops + hourly, tips, about |
 
-URL hash works too: `#home` `#routes` `#stops` `#tips`.
+Hashes: `#now` `#routes` `#more`
 
-## “Premium-style” features (all free)
+## Features
 
-- Multi-page shell + bottom nav  
-- Route **dropdown** with full stop lists per corridor  
-- **Two-way** direction toggle (saved in browser)  
-- **Route compare** cards + “best right now”  
-- **Comfort score** (0–100) for the selected path  
-- **Smart leave** window from hourly rain  
-- **3D-style weather sky** (sun, clouds, rain, storm, fog — CSS only)  
-- Rich SVG icons + glass UI  
-- Sunrise / sunset  
+- Map-style path with per-stop weather color  
+- Route compare + one-tap select  
+- Comfort score, smart leave, SVG weather icons  
+- Soft solid cards, Marina blue + gold (Chennai-friendly)  
+- Subtle sky wash (not heavy glass / 3D clutter)  
 
 ## Run locally
 

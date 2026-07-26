@@ -1,10 +1,10 @@
 {
-  "name": "Chennai Route Weather",
-  "short_name": "Route Weather",
-  "description": "Velachery ↔ MSC IT Park Ambattur — Koyambedu, Porur Bypass, DLF routes",
+  "name": "Chennai Commute Weather",
+  "short_name": "Commute",
+  "description": "Velachery ↔ MSC IT Park — path map, route compare, free weather",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#070b16",
-  "theme_color": "#0b1220",
+  "background_color": "#0c1a2e",
+  "theme_color": "#0c1a2e",
   "lang": "en-IN"
 }

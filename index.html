@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
-      content="Chennai commute weather app: Velachery ↔ MSC IT Park Ambattur. Routes, stops, tips. Free Open-Meteo."
+      content="Chennai commute cockpit: Velachery to MSC IT Park. Path map, route compare, free Open-Meteo."
     />
-    <meta name="theme-color" content="#070b16" />
+    <meta name="theme-color" content="#0c1a2e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <title>Chennai Route Weather</title>
+    <title>Chennai Commute · Velachery ↔ MSC</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -20,146 +20,119 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='12' fill='%23FFB84D'/%3E%3Cpath fill='%23E8EEF8' d='M18 40c0-6 4.5-10 10.5-10 1.2 0 2.4.2 3.5.6A9 9 0 0 1 48 40H18z'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='12' fill='%23F0A830'/%3E%3Cpath fill='%237EB8E8' d='M18 40c0-6 4.5-10 10.5-10 1.2 0 2.4.2 3.5.6A9 9 0 0 1 48 40H18z'/%3E%3C/svg%3E"
     />
   </head>
-  <body data-scene="cloud" data-day="day" data-page="home">
-    <div class="weather-scene" id="weather-scene" aria-hidden="true">
-      <div class="sky-gradient"></div>
-      <div class="sun-orb"></div>
-      <div class="moon-orb"></div>
-      <div class="cloud c1"></div>
-      <div class="cloud c2"></div>
-      <div class="cloud c3"></div>
-      <div class="rain-layer"></div>
-      <div class="storm-flash"></div>
-      <div class="fog-layer"></div>
-      <div class="heat-haze"></div>
-      <div class="ground-glow"></div>
-      <div class="noise-overlay"></div>
+  <body data-scene="cloud" data-day="day" data-page="now">
+    <div class="sky" id="sky" aria-hidden="true">
+      <div class="sky-wash"></div>
+      <div class="sky-orb"></div>
     </div>
 
-    <div class="app-shell">
-      <!-- Compact top bar -->
-      <header class="app-bar glass-bar">
-        <div class="app-bar-left">
-          <div class="brand-mark sm" id="brand-icon" aria-hidden="true"></div>
-          <div class="app-bar-titles">
-            <h1 id="page-title">Home</h1>
-            <p id="page-sub">Velachery ↔ MSC IT Park</p>
-          </div>
+    <div class="shell">
+      <header class="topbar">
+        <div class="topbar-text">
+          <p class="kicker">Chennai commute</p>
+          <h1 id="page-title">Now</h1>
         </div>
-        <div class="app-bar-actions">
-          <span class="live-pill" id="status" data-kind="loading">…</span>
-          <button type="button" id="refresh-btn" class="icon-btn primary" title="Refresh" aria-label="Refresh weather"></button>
+        <div class="topbar-actions">
+          <span class="live" id="status" data-kind="loading">…</span>
+          <button type="button" id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh"></button>
         </div>
       </header>
 
-      <!-- Scrollable page stack -->
-      <main class="app-main" id="app-main">
-        <!-- HOME -->
-        <section class="page" id="page-home" data-page="home" aria-label="Home dashboard">
-          <div class="status-mini">
-            <span id="countdown" class="countdown">—</span>
-            <span class="scene-label" id="scene-label">Live sky</span>
-          </div>
+      <main class="content" id="app-main">
+        <!-- NOW -->
+        <section class="page is-active" id="page-now" data-page="now">
+          <p class="route-line" id="route-line">Velachery → MSC IT Park</p>
 
-          <div class="hero-stats">
-            <div class="comfort-ring" id="comfort-ring" style="--p: 0">
-              <span class="ring-val">—</span>
-              <span class="ring-lbl">Comfort</span>
+          <article class="card path-card">
+            <div class="path-head">
+              <span class="path-label" id="path-label">Your path</span>
+              <span class="path-legend">
+                <i class="leg ok"></i>OK
+                <i class="leg hot"></i>Hot
+                <i class="leg rain"></i>Rain
+              </span>
             </div>
-            <div class="sun-times" id="sun-times"></div>
-          </div>
+            <div class="path-map" id="path-map" aria-label="Route path map"></div>
+          </article>
 
-          <section class="banner glass tone-ok" id="banner" aria-live="polite">
-            <div class="banner-layout">
-              <div class="banner-icon" id="banner-icon" aria-hidden="true"></div>
-              <div class="banner-copy">
+          <div class="now-grid">
+            <article class="card comfort-card" id="comfort-card">
+              <span class="card-kicker">Comfort</span>
+              <div class="comfort-big" id="comfort-val">—</div>
+              <p class="card-sub" id="comfort-sub">Loading…</p>
+            </article>
+            <article class="card hero-wx" id="hero-wx">
+              <div class="hero-icon" id="banner-icon"></div>
+              <div>
                 <h2 id="headline">Loading…</h2>
-                <div id="summary-meta" class="summary-meta">Connecting…</div>
+                <p id="hero-meta" class="card-sub">Open-Meteo</p>
               </div>
-            </div>
-          </section>
+            </article>
+          </div>
 
-          <section class="leave-card glass" id="leave-card" hidden></section>
-          <section class="focus-card glass" id="focus-card" hidden></section>
+          <article class="card leave-card" id="leave-card" hidden></article>
+          <article class="card focus-card" id="focus-card" hidden></article>
 
-          <div class="quick-nav" id="quick-nav" aria-label="Quick links"></div>
+          <div class="action-row">
+            <button type="button" class="btn primary" data-go="routes" id="btn-change-route">Change route</button>
+            <button type="button" class="btn ghost" data-go="more" id="btn-all-stops">All stops</button>
+          </div>
+
+          <div class="meta-row" id="sun-times"></div>
+          <p class="countdown" id="countdown">Next refresh —</p>
         </section>
 
         <!-- ROUTES -->
-        <section class="page" id="page-routes" data-page="routes" hidden aria-label="Routes">
-          <section class="controls glass">
-            <label class="field">
-              <span class="field-label">
-                <span id="route-field-icon" class="field-ico" aria-hidden="true"></span>
-                Choose route
-              </span>
-              <div class="select-shell">
-                <select id="route-select" class="route-select" aria-label="Select commute route"></select>
-              </div>
-            </label>
-
-            <div class="field">
-              <span class="field-label">Two-way direction</span>
-              <div class="dir-toggle" role="group" aria-label="Commute direction">
-                <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
-                <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
-              </div>
+        <section class="page" id="page-routes" data-page="routes" hidden>
+          <article class="card">
+            <span class="card-kicker">Direction</span>
+            <div class="dir-toggle" role="group" aria-label="Direction">
+              <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
+              <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
             </div>
+          </article>
 
-            <p class="control-hint">
-              Pick a corridor, then open <strong>Stops</strong> for the full list.
-            </p>
-          </section>
-
-          <div class="direction-line" id="direction">Velachery → MSC IT Park</div>
-          <section class="compare" id="compare" aria-label="Compare routes"></section>
+          <p class="section-note" id="routes-note">Tap a corridor to select it for your path.</p>
+          <div class="route-cards" id="compare" aria-label="Route compare"></div>
         </section>
 
-        <!-- STOPS -->
-        <section class="page" id="page-stops" data-page="stops" hidden aria-label="Stops along route">
-          <div class="page-intro glass" id="stops-intro"></div>
-          <div class="route" id="route" aria-label="Selected route stops"></div>
-        </section>
+        <!-- MORE -->
+        <section class="page" id="page-more" data-page="more" hidden>
+          <article class="card intro-card" id="stops-intro"></article>
 
-        <!-- TIPS -->
-        <section class="page" id="page-tips" data-page="tips" hidden aria-label="Tips and about">
-          <section class="tips" id="tips" aria-label="Commute tips"></section>
-          <footer class="footer glass">
+          <h3 class="section-title">Stops on path</h3>
+          <div class="route" id="route" aria-label="Stops"></div>
+
+          <h3 class="section-title">Tips</h3>
+          <div id="tips" class="tips"></div>
+
+          <article class="card about-card">
+            <h3>About</h3>
             <p>
-              Personal use ·
-              <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank">Open-Meteo</a>
-              (free, no API key) · Auto-refresh <strong>10 min</strong>
+              Personal commute weather · Velachery ↔ MSC IT Park, Ambattur · free
+              <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a>
+              data (no API key). Auto-refresh every 10 minutes.
             </p>
-            <p>
-              Icons &amp; UI are free SVG/CSS. Routes are approximate map points for personal commuting.
-            </p>
-            <p class="footer-path">
-              Home: Velachery · Destination: MSC IT Park, Ambattur
-            </p>
-          </footer>
+            <p class="muted">Approximate map points for personal use only.</p>
+          </article>
         </section>
       </main>
 
-      <!-- Bottom navigation -->
-      <nav class="bottom-nav glass-bar" aria-label="Main navigation">
-        <button type="button" class="nav-item active" data-nav="home" aria-current="page">
-          <span class="nav-ico" data-ico="home"></span>
-          <span class="nav-lbl">Home</span>
+      <nav class="tabbar" aria-label="Main">
+        <button type="button" class="tab active" data-nav="now" aria-current="page">
+          <span class="tab-ico" data-ico="now"></span>
+          <span>Now</span>
         </button>
-        <button type="button" class="nav-item" data-nav="routes">
-          <span class="nav-ico" data-ico="routes"></span>
-          <span class="nav-lbl">Routes</span>
+        <button type="button" class="tab" data-nav="routes">
+          <span class="tab-ico" data-ico="routes"></span>
+          <span>Routes</span>
         </button>
-        <button type="button" class="nav-item" data-nav="stops">
-          <span class="nav-ico" data-ico="stops"></span>
-          <span class="nav-lbl">Stops</span>
-        </button>
-        <button type="button" class="nav-item" data-nav="tips">
-          <span class="nav-ico" data-ico="tips"></span>
-          <span class="nav-lbl">Tips</span>
+        <button type="button" class="tab" data-nav="more">
+          <span class="tab-ico" data-ico="more"></span>
+          <span>More</span>
         </button>
       </nav>
     </div>

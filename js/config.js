@@ -9,7 +9,7 @@ export const APP = {
   timezone: "Asia/Kolkata",
   refreshMs: 10 * 60 * 1000,
   apiBase: "https://api.open-meteo.com/v1/forecast",
-  storageKey: "chennai-route-weather:v3",
+  storageKey: "chennai-route-weather:v4",
 };
 
 export const HOME = {
