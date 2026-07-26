@@ -5,19 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Personal two-way Chennai commute weather: Velachery to MSC IT Park Ambattur via Koyambedu, Porur Bypass, or DLF. Free Open-Meteo, premium UI."
+      content="Modern personal Chennai commute weather: Velachery to MSC IT Park via Koyambedu, Porur Bypass, or DLF. Free Open-Meteo."
     />
-    <meta name="theme-color" content="#0b1220" />
+    <meta name="theme-color" content="#070b16" />
     <title>Chennai Route Weather · Velachery ↔ MSC Ambattur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌧️%3C/text%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='12' fill='%23FFB84D'/%3E%3Cpath fill='%23E8EEF8' d='M18 40c0-6 4.5-10 10.5-10 1.2 0 2.4.2 3.5.6A9 9 0 0 1 48 40H18z'/%3E%3C/svg%3E"
     />
   </head>
   <body data-scene="cloud" data-day="day">
-    <!-- 3D-style weather stage (CSS only, free) -->
     <div class="weather-scene" id="weather-scene" aria-hidden="true">
       <div class="sky-gradient"></div>
       <div class="sun-orb"></div>
@@ -30,49 +35,56 @@
       <div class="fog-layer"></div>
       <div class="heat-haze"></div>
       <div class="ground-glow"></div>
+      <div class="noise-overlay"></div>
     </div>
 
     <div class="app">
       <header class="top glass-bar">
         <div class="brand">
-          <h1>Chennai Route Weather</h1>
-          <p>
-            <strong>Velachery</strong> ↔ <strong>MSC IT Park, Ambattur</strong>
-          </p>
+          <div class="brand-mark" id="brand-icon" aria-hidden="true"></div>
+          <div>
+            <p class="eyebrow">Personal commute</p>
+            <h1>Chennai Route Weather</h1>
+            <p class="brand-sub">
+              <strong>Velachery</strong>
+              <span class="swap">↔</span>
+              <strong>MSC IT Park</strong>
+            </p>
+          </div>
         </div>
-        <button type="button" id="refresh-btn" class="primary">Refresh</button>
+        <button type="button" id="refresh-btn" class="primary btn-icon">
+          Refresh
+        </button>
       </header>
 
-      <!-- Route dropdown + two-way controls -->
       <section class="controls glass" aria-label="Route controls">
         <label class="field">
-          <span class="field-label">Choose route</span>
-          <select id="route-select" class="route-select" aria-label="Select commute route">
-            <!-- filled by app.js -->
-          </select>
+          <span class="field-label">
+            <span id="route-field-icon" class="field-ico" aria-hidden="true"></span>
+            Choose route
+          </span>
+          <div class="select-shell">
+            <select id="route-select" class="route-select" aria-label="Select commute route"></select>
+          </div>
         </label>
 
         <div class="field">
           <span class="field-label">Two-way direction</span>
           <div class="dir-toggle" role="group" aria-label="Commute direction">
-            <button type="button" id="dir-home" class="dir-btn active">
-              Home → Office
-            </button>
-            <button type="button" id="dir-office" class="dir-btn">
-              Office → Home
-            </button>
+            <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
+            <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
           </div>
         </div>
 
         <p class="control-hint">
-          Dropdown switches full stop list: <strong>Koyambedu</strong>,
-          <strong>Porur Bypass</strong>, or <strong>DLF</strong> corridor.
+          Switch full corridor view: <strong>Koyambedu</strong>,
+          <strong>Porur Bypass</strong>, or <strong>DLF</strong>.
         </p>
       </section>
 
       <div class="status-row">
         <span id="status" data-kind="loading">Starting…</span>
-        <span id="countdown">Next refresh —</span>
+        <span id="countdown" class="countdown">—</span>
         <span class="scene-label" id="scene-label">Live sky</span>
       </div>
 
@@ -85,8 +97,13 @@
       </div>
 
       <section class="banner glass tone-ok" id="banner" aria-live="polite">
-        <h2 id="headline">Loading route weather…</h2>
-        <div id="summary-meta">Connecting to free Open-Meteo…</div>
+        <div class="banner-layout">
+          <div class="banner-icon" id="banner-icon" aria-hidden="true"></div>
+          <div class="banner-copy">
+            <h2 id="headline">Loading route weather…</h2>
+            <div id="summary-meta" class="summary-meta">Connecting to free Open-Meteo…</div>
+          </div>
+        </div>
       </section>
 
       <section class="leave-card glass" id="leave-card" hidden></section>
@@ -94,26 +111,18 @@
       <section class="compare" id="compare" aria-label="Compare routes"></section>
       <section class="tips" id="tips" aria-label="Commute tips"></section>
 
-      <div class="direction-line">
-        Showing: <strong id="direction">Velachery → MSC IT Park</strong>
-      </div>
+      <div class="direction-line" id="direction">Velachery → MSC IT Park</div>
 
       <main class="route" id="route" aria-label="Selected route stops"></main>
 
       <footer class="footer glass">
         <p>
           Personal use ·
-          <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank"
-            >Open-Meteo</a
-          >
+          <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank">Open-Meteo</a>
           (free, no API key) · Auto-refresh <strong>10 min</strong>
         </p>
         <p>
-          Premium-style features (route compare, comfort score, smart leave,
-          3D sky scenes) — <strong>all free</strong>, no subscriptions.
-        </p>
-        <p>
-          Routes are approximate public map points for personal commuting only.
+          Modern icons & glass UI are free SVG/CSS — no paid services or subscriptions.
         </p>
       </footer>
     </div>

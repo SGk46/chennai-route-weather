@@ -1,5 +1,12 @@
 import { APP, ROUTE_LIST, ROUTES } from "./config.js";
 import { fetchRouteWeather, fetchRouteCompare } from "./weather.js";
+import {
+  ui,
+  weatherIcon,
+  routeGlyph,
+  tipIcon,
+  iconBadge,
+} from "./icons.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -20,22 +27,9 @@ const els = {
   compare: $("#compare"),
   leaveCard: $("#leave-card"),
   comfortRing: $("#comfort-ring"),
-  scene: $("#weather-scene"),
   sceneLabel: $("#scene-label"),
   sunTimes: $("#sun-times"),
-};
-
-const ICONS = {
-  sun: "☀️",
-  partly: "⛅",
-  cloud: "☁️",
-  fog: "🌫️",
-  drizzle: "🌦️",
-  rain: "🌧️",
-  heavyrain: "⛈️",
-  shower: "🌦️",
-  snow: "❄️",
-  storm: "⛈️",
+  bannerIcon: $("#banner-icon"),
 };
 
 function loadPrefs() {
@@ -55,7 +49,6 @@ function savePrefs(partial) {
 
 const prefs = loadPrefs();
 let routeId = ROUTES[prefs.routeId] ? prefs.routeId : "porur";
-/** false = home → office, true = office → home */
 let reverseRoute = !!prefs.reverseRoute;
 let lastPayload = null;
 let lastCompare = null;
@@ -64,7 +57,7 @@ let countdownId = null;
 let nextRefreshAt = 0;
 
 function setStatus(text, kind = "ok") {
-  els.status.textContent = text;
+  els.status.innerHTML = `<span class="status-dot"></span><span>${text}</span>`;
   els.status.dataset.kind = kind;
 }
 
@@ -93,13 +86,20 @@ function formatHour(iso) {
 
 function badgeFor(stop) {
   if (stop.tag === "storm" || stop.code >= 95)
-    return { cls: "storm", text: "Storm" };
-  if (stop.rainNow) return { cls: "rain", text: "Raining" };
-  if (stop.rainingSoon) return { cls: "rain-soon", text: "Rain soon" };
+    return { cls: "storm", text: "Storm", icon: ui.zap() };
+  if (stop.rainNow)
+    return { cls: "rain", text: "Raining", icon: ui.drop() };
+  if (stop.rainingSoon)
+    return { cls: "rain-soon", text: "Rain soon", icon: ui.umbrella() };
   if (stop.heat.level === "extreme" || stop.heat.level === "very-hot")
-    return { cls: "hot", text: stop.heat.label };
-  if (stop.heat.level === "hot") return { cls: "hot", text: "Hot sun" };
-  return { cls: "ok", text: stop.heat.label };
+    return { cls: "hot", text: stop.heat.label, icon: ui.sunSmall() };
+  if (stop.heat.level === "hot")
+    return { cls: "hot", text: "Hot sun", icon: ui.sunSmall() };
+  return { cls: "ok", text: stop.heat.label, icon: ui.check() };
+}
+
+function metaChip(svg, text, extra = "") {
+  return `<span class="meta-chip ${extra}">${svg}<span>${text}</span></span>`;
 }
 
 function applyWeatherScene(summary) {
@@ -109,22 +109,36 @@ function applyWeatherScene(summary) {
   document.body.dataset.day = day ? "day" : "night";
   if (els.sceneLabel) {
     const labels = {
-      sun: "Hot sun sky",
+      sun: "Clear & hot",
       partly: "Partly cloudy",
-      cloud: "Overcast layers",
-      rain: "Rain atmosphere",
+      cloud: "Overcast",
+      rain: "Rainy sky",
       heavyrain: "Heavy rain",
       storm: "Storm mode",
-      fog: "Fog veil",
+      fog: "Foggy",
     };
-    els.sceneLabel.textContent = labels[scene] || "Live sky";
+    const iconName =
+      scene === "heavyrain" ? "heavyrain" : scene === "partly" ? "partly" : scene;
+    els.sceneLabel.innerHTML = `${weatherIcon(iconName, { size: "xs" })}<span>${labels[scene] || "Live sky"}</span>`;
+  }
+  if (els.bannerIcon) {
+    const map = {
+      sun: "sun",
+      partly: "partly",
+      cloud: "cloud",
+      rain: "rain",
+      heavyrain: "heavyrain",
+      storm: "storm",
+      fog: "fog",
+    };
+    els.bannerIcon.innerHTML = weatherIcon(map[scene] || "cloud", { size: "lg" });
   }
 }
 
 function renderRouteSelect() {
   els.routeSelect.innerHTML = ROUTE_LIST.map(
     (r) =>
-      `<option value="${r.id}" ${r.id === routeId ? "selected" : ""}>${r.emoji} ${r.name}</option>`
+      `<option value="${r.id}" ${r.id === routeId ? "selected" : ""}>${r.name}</option>`
   ).join("");
 }
 
@@ -132,9 +146,11 @@ function updateDirectionUi() {
   els.dirHome.classList.toggle("active", !reverseRoute);
   els.dirOffice.classList.toggle("active", reverseRoute);
   const r = ROUTES[routeId];
-  els.direction.textContent = reverseRoute
-    ? `MSC IT Park → Velachery · ${r.short} (return)`
-    : `Velachery → MSC IT Park · ${r.short} (to office)`;
+  if (els.direction) {
+    els.direction.innerHTML = reverseRoute
+      ? `${iconBadge(ui.building(), "ib-office")}<span>MSC IT Park</span>${iconBadge(ui.arrowRight(), "ib-arrow")}<span>Velachery</span><span class="dir-route">· ${r.short}</span>`
+      : `${iconBadge(ui.home(), "ib-home")}<span>Velachery</span>${iconBadge(ui.arrowRight(), "ib-arrow")}<span>MSC IT Park</span><span class="dir-route">· ${r.short}</span>`;
+  }
 }
 
 function renderSummary(data) {
@@ -144,20 +160,18 @@ function renderSummary(data) {
 
   const rainy =
     summary.rainyStops.length > 0
-      ? `Watch: ${summary.rainyStops.join(", ")}`
+      ? metaChip(ui.alert(), `Watch: ${summary.rainyStops.join(", ")}`, "warn-chip")
       : "";
 
   els.summaryMeta.innerHTML = `
-    <span>Home ${summary.homeTemp?.toFixed(1) ?? "—"}°C</span>
-    <span class="dot">→</span>
-    <span class="focus-inline">${summary.focusName ?? "Key"} ${summary.focusTemp?.toFixed(1) ?? "—"}°C</span>
-    <span class="dot">→</span>
-    <span>Office ${summary.officeTemp?.toFixed(1) ?? "—"}°C</span>
-    <span class="sep">·</span>
-    <span>${summary.minTemp.toFixed(0)}–${summary.maxTemp.toFixed(0)}°C</span>
-    <span class="sep">·</span>
-    <span>Updated ${formatTime(fetchedAt)}</span>
-    ${rainy ? `<span class="sep">·</span><span class="warn">${rainy}</span>` : ""}
+    ${metaChip(ui.home(), `Home ${summary.homeTemp?.toFixed(1) ?? "—"}°C`, "chip-home")}
+    <span class="flow-arrow">${ui.arrowRight()}</span>
+    ${metaChip(ui.mapPin(), `${summary.focusName ?? "Key"} ${summary.focusTemp?.toFixed(1) ?? "—"}°C`, "chip-focus")}
+    <span class="flow-arrow">${ui.arrowRight()}</span>
+    ${metaChip(ui.building(), `Office ${summary.officeTemp?.toFixed(1) ?? "—"}°C`, "chip-office")}
+    ${metaChip(ui.thermometer(), `${summary.minTemp.toFixed(0)}–${summary.maxTemp.toFixed(0)}°C`)}
+    ${metaChip(ui.clock(), formatTime(fetchedAt))}
+    ${rainy}
   `;
 
   if (els.comfortRing) {
@@ -173,9 +187,9 @@ function renderSummary(data) {
 
   if (els.sunTimes) {
     els.sunTimes.innerHTML = `
-      <span>🌅 ${formatHour(summary.sunrise)}</span>
-      <span>🌇 ${formatHour(summary.sunset)}</span>
-      <span class="route-pill">${route.emoji} ${route.short}</span>
+      <span class="sun-chip">${ui.sunrise()}<span>${formatHour(summary.sunrise)}</span></span>
+      <span class="sun-chip">${ui.sunset()}<span>${formatHour(summary.sunset)}</span></span>
+      <span class="route-pill">${routeGlyph(route.id)}<span>${route.short}</span></span>
     `;
   }
 
@@ -191,10 +205,14 @@ function renderLeave(data) {
   }
   els.leaveCard.hidden = false;
   els.leaveCard.className = `leave-card glass kind-${leave.kind}`;
+  const icon = leave.kind === "rain" ? ui.umbrella() : ui.spark();
   els.leaveCard.innerHTML = `
-    <span class="leave-kicker">Smart leave · free</span>
-    <strong>${leave.label}</strong>
-    <p>${leave.text}</p>
+    <div class="leave-icon">${icon}</div>
+    <div class="leave-body">
+      <span class="leave-kicker">Smart leave · free</span>
+      <strong>${leave.label}</strong>
+      <p>${leave.text}</p>
+    </div>
   `;
 }
 
@@ -205,7 +223,6 @@ function renderFocusCard(data) {
   if (!stop || !els.focusCard) return;
 
   const badge = badgeFor(stop);
-  const icon = ICONS[stop.icon] || "🛣️";
   const nextRain = stop.hourly.find(
     (h) => (h.pop ?? 0) >= 40 || (h.rain ?? 0) > 0 || (h.precip ?? 0) > 0.1
   );
@@ -213,47 +230,52 @@ function renderFocusCard(data) {
   els.focusCard.hidden = false;
   els.focusCard.innerHTML = `
     <div class="focus-top">
-      <div>
-        <span class="role-pill focus-pill">Key stretch · ${data.route.short}</span>
-        <h2>${icon} ${stop.name}</h2>
-        <p class="area">${stop.area}</p>
+      <div class="focus-left">
+        <div class="wx-hero">${weatherIcon(stop.icon, { size: "xl" })}</div>
+        <div>
+          <span class="role-pill focus-pill">${iconBadge(routeGlyph(data.route.id))} Key · ${data.route.short}</span>
+          <h2>${stop.name}</h2>
+          <p class="area">${stop.area}</p>
+        </div>
       </div>
       <div class="stop-main col">
         <span class="temp">${stop.temp.toFixed(1)}°</span>
-        <span class="comfort-mini">Comfort ${stop.comfort}</span>
+        <span class="comfort-mini">${ui.spark()} Comfort ${stop.comfort}</span>
       </div>
     </div>
     <div class="stop-meta">
-      <span class="badge ${badge.cls}">${badge.text}</span>
-      <span>${stop.text}</span>
-      <span>Feels ${stop.feelsLike.toFixed(0)}°</span>
-      <span>Wind ${stop.wind.toFixed(0)} km/h</span>
-      <span>Humidity ${stop.humidity}%</span>
+      <span class="badge ${badge.cls}">${badge.icon}<span>${badge.text}</span></span>
+      <span class="cond-text">${stop.text}</span>
+      ${metaChip(ui.thermometer(), `Feels ${stop.feelsLike.toFixed(0)}°`)}
+      ${metaChip(ui.wind(), `${stop.wind.toFixed(0)} km/h`)}
+      ${metaChip(ui.drop(), `${stop.humidity}%`)}
       ${
         stop.rainNow
-          ? `<span class="rain-amt">Rain ${stop.rain.toFixed(1)} mm now</span>`
+          ? metaChip(ui.drop(), `${stop.rain.toFixed(1)} mm now`, "rain-amt")
           : ""
       }
       ${
         nextRain && !stop.rainNow
-          ? `<span class="rain-amt">Wet risk ~${formatHour(nextRain.time)} (${nextRain.pop ?? "—"}%)</span>`
+          ? metaChip(ui.clock(), `Wet ~${formatHour(nextRain.time)} (${nextRain.pop ?? "—"}%)`, "rain-amt")
           : ""
       }
     </div>
-    ${stop.tip ? `<p class="focus-tip">${stop.tip}</p>` : ""}
+    ${stop.tip ? `<p class="focus-tip">${ui.mapPin()} ${stop.tip}</p>` : ""}
   `;
 }
 
 function renderTips(data) {
   if (!els.tips) return;
   els.tips.innerHTML = `
-    <h3 class="tips-title">Premium tips · always free</h3>
+    <div class="section-head">
+      <h3 class="tips-title">${ui.spark()} Premium tips <span class="free-tag">free</span></h3>
+    </div>
     <ul class="tips-list">
       ${data.tips
         .map(
           (t) => `
         <li class="tip glass level-${t.level}">
-          <span class="tip-icon">${t.icon}</span>
+          <span class="tip-icon-wrap level-${t.level}">${tipIcon(t.level)}</span>
           <span>${t.text}</span>
         </li>`
         )
@@ -269,18 +291,25 @@ function renderRoute(data) {
   els.route.innerHTML = stops
     .map((stop, idx) => {
       const badge = badgeFor(stop);
-      const icon = ICONS[stop.icon] || "🌡️";
-      const isFocus =
-        stop.id === data.route.focusStopId || stop.focus;
+      const isFocus = stop.id === data.route.focusStopId || stop.focus;
+      const roleIcon =
+        stop.role === "home"
+          ? ui.home()
+          : stop.role === "office"
+            ? ui.building()
+            : isFocus
+              ? ui.mapPin()
+              : ui.route();
+
       const hours = stop.hourly
         .slice(0, 5)
         .map(
           (h) => `
           <div class="hour">
             <span class="h-time">${formatHour(h.time)}</span>
-            <span class="h-icon">${ICONS[h.icon] || "·"}</span>
+            <span class="h-icon">${weatherIcon(h.icon, { size: "xs" })}</span>
             <span class="h-temp">${h.temp.toFixed(0)}°</span>
-            <span class="h-pop">${h.pop != null ? `${h.pop}%` : "—"}</span>
+            <span class="h-pop">${ui.drop()} ${h.pop != null ? `${h.pop}%` : "—"}</span>
           </div>`
         )
         .join("");
@@ -288,49 +317,43 @@ function renderRoute(data) {
       return `
       <article class="stop role-${stop.role} tag-${stop.tag}${isFocus ? " is-focus" : ""}" data-id="${stop.id}" id="stop-${stop.id}">
         <div class="stop-rail">
-          <div class="rail-dot"></div>
+          <div class="rail-dot">${roleIcon}</div>
           ${idx < stops.length - 1 ? '<div class="rail-line"></div>' : ""}
         </div>
         <div class="stop-body glass">
           <header class="stop-head">
             <div class="stop-titles">
-              <span class="role-pill">${stop.label}</span>
+              <span class="role-pill">${roleIcon}<span>${stop.label}</span></span>
               <h2>${stop.name}</h2>
               <p class="area">${stop.area}</p>
             </div>
             <div class="stop-main col">
               <div class="temp-row">
-                <span class="wx-icon">${icon}</span>
+                <span class="wx-icon-wrap">${weatherIcon(stop.icon, { size: "lg" })}</span>
                 <span class="temp">${stop.temp.toFixed(1)}°</span>
               </div>
-              <span class="comfort-mini">Comfort ${stop.comfort}</span>
+              <span class="comfort-mini">${ui.spark()} ${stop.comfort}</span>
             </div>
           </header>
           <div class="stop-meta">
-            <span class="badge ${badge.cls}">${badge.text}</span>
-            <span>${stop.text}</span>
-            <span>Feels ${stop.feelsLike.toFixed(0)}°</span>
-            <span>Humidity ${stop.humidity}%</span>
-            <span>Wind ${stop.wind.toFixed(0)} km/h</span>
-            <span>UV ${stop.uv ?? "—"}</span>
+            <span class="badge ${badge.cls}">${badge.icon}<span>${badge.text}</span></span>
+            <span class="cond-text">${stop.text}</span>
+            ${metaChip(ui.thermometer(), `Feels ${stop.feelsLike.toFixed(0)}°`)}
+            ${metaChip(ui.drop(), `${stop.humidity}%`)}
+            ${metaChip(ui.wind(), `${stop.wind.toFixed(0)} km/h`)}
+            ${metaChip(ui.sunSmall(), `UV ${stop.uv ?? "—"}`)}
             ${
               stop.rainNow
-                ? `<span class="rain-amt">Rain ${stop.rain.toFixed(1)} mm</span>`
+                ? metaChip(ui.drop(), `${stop.rain.toFixed(1)} mm`, "rain-amt")
                 : ""
             }
           </div>
           ${
             stop.tip && isFocus
-              ? `<p class="focus-tip inline-tip">${stop.tip}</p>`
+              ? `<p class="focus-tip inline-tip">${ui.mapPin()} ${stop.tip}</p>`
               : ""
           }
           <div class="hourly">
-            <div class="hour head">
-              <span class="h-time">Time</span>
-              <span class="h-icon"></span>
-              <span class="h-temp">°C</span>
-              <span class="h-pop">Rain%</span>
-            </div>
             ${hours}
           </div>
         </div>
@@ -342,10 +365,11 @@ function renderRoute(data) {
 function renderCompare(compare) {
   if (!els.compare || !compare) return;
   lastCompare = compare;
+  const best = ROUTES[compare.bestId];
   els.compare.innerHTML = `
-    <div class="compare-head">
-      <h3>Route compare · free</h3>
-      <p>Best right now: <strong>${ROUTES[compare.bestId]?.emoji || ""} ${ROUTES[compare.bestId]?.short || "—"}</strong></p>
+    <div class="section-head">
+      <h3 class="tips-title">${ui.layers()} Route compare <span class="free-tag">free</span></h3>
+      <p class="compare-best">Best now: <strong>${routeGlyph(best?.id)}${best?.short || "—"}</strong></p>
     </div>
     <div class="compare-grid">
       ${compare.cards
@@ -354,10 +378,10 @@ function renderCompare(compare) {
           return `
           <button type="button" class="compare-card glass ${active ? "active" : ""} ${i === 0 ? "best" : ""}" data-route="${c.route.id}">
             <span class="cc-top">
-              <span>${c.route.emoji} ${c.route.short}</span>
-              ${i === 0 ? '<span class="best-tag">Best</span>' : ""}
+              <span class="cc-name">${routeGlyph(c.route.id)}<span>${c.route.short}</span></span>
+              ${i === 0 ? `<span class="best-tag">${ui.star()} Best</span>` : ""}
             </span>
-            <span class="cc-temp">${c.focus.temp.toFixed(0)}° at ${c.focus.name}</span>
+            <span class="cc-wx">${weatherIcon(c.focus.icon, { size: "sm" })}<span class="cc-temp">${c.focus.temp.toFixed(0)}° · ${c.focus.name}</span></span>
             <span class="cc-meta">
               Comfort ${c.avgComfort}
               ${c.storm ? " · Storm" : c.wet ? " · Wet risk" : " · Dry"}
@@ -380,7 +404,7 @@ function updateCountdown() {
   const totalSec = Math.ceil(ms / 1000);
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
-  els.countdown.textContent = `Next refresh ${m}:${String(s).padStart(2, "0")}`;
+  els.countdown.innerHTML = `${ui.clock()} <span>${m}:${String(s).padStart(2, "0")}</span>`;
 }
 
 function scheduleRefresh() {
@@ -393,12 +417,10 @@ function scheduleRefresh() {
 }
 
 async function selectRoute(id) {
-  if (!ROUTES[id] || id === routeId) {
-    if (id === routeId && lastPayload) {
-      // still re-render selection state
-      renderCompare(lastCompare);
-    }
-    if (!ROUTES[id]) return;
+  if (!ROUTES[id]) return;
+  if (id === routeId) {
+    if (lastCompare) renderCompare(lastCompare);
+    return;
   }
   routeId = id;
   savePrefs({ routeId });
@@ -411,6 +433,7 @@ async function selectRoute(id) {
 async function loadWeather({ silent = false } = {}) {
   if (!silent) setStatus("Fetching live weather…", "loading");
   els.refreshBtn.disabled = true;
+  els.refreshBtn.classList.add("is-spinning");
   try {
     const data = await fetchRouteWeather(routeId);
     lastPayload = data;
@@ -419,13 +442,14 @@ async function loadWeather({ silent = false } = {}) {
     renderFocusCard(data);
     renderTips(data);
     renderRoute(data);
-    setStatus(`Live · ${data.route.short} · Open-Meteo free`, "ok");
+    setStatus(`Live · ${data.route.short} · Open-Meteo`, "ok");
   } catch (err) {
     console.error(err);
     setStatus(err?.message || "Could not load weather.", "error");
     throw err;
   } finally {
     els.refreshBtn.disabled = false;
+    els.refreshBtn.classList.remove("is-spinning");
   }
 }
 
@@ -451,11 +475,27 @@ async function loadAll({ silent = false } = {}) {
     updateCountdown();
     timerId = setTimeout(() => loadAll({ silent: true }), 60_000);
   }
-  // compare in parallel after / alongside
   loadCompare({ silent: true });
 }
 
 function wireUi() {
+  // Icon-enhanced static chrome
+  if (els.refreshBtn) {
+    els.refreshBtn.innerHTML = `${ui.refresh()}<span>Refresh</span>`;
+  }
+  if (els.dirHome) {
+    els.dirHome.innerHTML = `${ui.home()}<span>Home → Office</span>`;
+  }
+  if (els.dirOffice) {
+    els.dirOffice.innerHTML = `${ui.building()}<span>Office → Home</span>`;
+  }
+
+  const brandIcon = $("#brand-icon");
+  if (brandIcon) brandIcon.innerHTML = weatherIcon("partly", { size: "md" });
+
+  const selectWrapIcon = $("#route-field-icon");
+  if (selectWrapIcon) selectWrapIcon.innerHTML = ui.route();
+
   renderRouteSelect();
   updateDirectionUi();
 
