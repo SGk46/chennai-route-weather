@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Personal Chennai commute weather: Velachery home to MSC IT Park Ambattur. Free Open-Meteo data, refreshes every 10 minutes."
+    />
+    <meta name="theme-color" content="#0b1220" />
+    <title>Chennai Route Weather · Velachery ↔ Ambattur</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌧️%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div class="brand">
+          <h1>Chennai Route Weather</h1>
+          <p>Velachery (home) ↔ MSC IT Park, Ambattur (office)</p>
+        </div>
+        <div class="actions">
+          <button type="button" id="flip-btn" title="Flip commute direction">
+            Flip direction
+          </button>
+          <button type="button" id="refresh-btn" class="primary">Refresh now</button>
+        </div>
+      </header>
+
+      <div class="status-row">
+        <span id="status" data-kind="loading">Starting…</span>
+        <span id="countdown">Next refresh in —</span>
+      </div>
+
+      <section class="banner tone-ok" id="banner" aria-live="polite">
+        <h2 id="headline">Loading route weather…</h2>
+        <div id="summary-meta">Connecting to free Open-Meteo forecast…</div>
+      </section>
+
+      <div class="direction">
+        Showing: <strong id="direction">Home → Office (morning)</strong>
+      </div>
+
+      <main class="route" id="route" aria-label="Commute stops weather"></main>
+
+      <footer class="footer">
+        <p>
+          Personal use · Live data from
+          <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank"
+            >Open-Meteo</a
+          >
+          (free, no API key). Auto-refresh every <strong>10 minutes</strong>.
+        </p>
+        <p>
+          Route points are approximate public map locations along a common
+          Velachery → Ambattur corridor. Not a turn-by-turn GPS product.
+        </p>
+        <p>
+          Run locally: open <code>index.html</code> via a static server, or
+          double-click if your browser allows ES modules over
+          <code>file://</code> (prefer a local server).
+        </p>
+      </footer>
+    </div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

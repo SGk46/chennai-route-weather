@@ -1,0 +1,10 @@
+{
+  "name": "Chennai Route Weather",
+  "short_name": "Route Weather",
+  "description": "Velachery ↔ MSC IT Park Ambattur commute weather (personal)",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "lang": "en-IN"
+}

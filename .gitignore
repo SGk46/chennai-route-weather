@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs / env (none required for this free app)
+.env
+.env.*
+*.log
+node_modules/
+dist/
+.cache/
