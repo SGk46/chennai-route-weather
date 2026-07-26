@@ -116,6 +116,22 @@ export const ui = {
     svg(`
       <path d="m12 3.5 2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 15.8 7.2 18.4l.9-5.4L4.2 9.2l5.4-.8L12 3.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
     `),
+  list: () =>
+    svg(`
+      <path d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    `),
+  grid: () =>
+    svg(`
+      <rect x="4" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+      <rect x="13" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+      <rect x="4" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+      <rect x="13" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+    `),
+  info: () =>
+    svg(`
+      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/>
+      <path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    `),
 };
 
 /**

@@ -9,6 +9,26 @@ import {
 } from "./icons.js";
 
 const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+
+const PAGES = {
+  home: {
+    title: "Home",
+    sub: "Live commute overview",
+  },
+  routes: {
+    title: "Routes",
+    sub: "Koyambedu · Porur · DLF",
+  },
+  stops: {
+    title: "Stops",
+    sub: "Weather along the path",
+  },
+  tips: {
+    title: "Tips",
+    sub: "Advice & about",
+  },
+};
 
 const els = {
   status: $("#status"),
@@ -30,6 +50,10 @@ const els = {
   sceneLabel: $("#scene-label"),
   sunTimes: $("#sun-times"),
   bannerIcon: $("#banner-icon"),
+  pageTitle: $("#page-title"),
+  pageSub: $("#page-sub"),
+  quickNav: $("#quick-nav"),
+  stopsIntro: $("#stops-intro"),
 };
 
 function loadPrefs() {
@@ -50,15 +74,69 @@ function savePrefs(partial) {
 const prefs = loadPrefs();
 let routeId = ROUTES[prefs.routeId] ? prefs.routeId : "porur";
 let reverseRoute = !!prefs.reverseRoute;
+let currentPage = PAGES[prefs.page] ? prefs.page : "home";
 let lastPayload = null;
 let lastCompare = null;
 let timerId = null;
 let countdownId = null;
 let nextRefreshAt = 0;
 
+/* ---------- Navigation ---------- */
+
+function navigate(page, { push = true } = {}) {
+  if (!PAGES[page]) page = "home";
+  currentPage = page;
+  document.body.dataset.page = page;
+  savePrefs({ page });
+
+  $$(".page").forEach((el) => {
+    const on = el.dataset.page === page;
+    el.hidden = !on;
+    el.classList.toggle("is-active", on);
+  });
+
+  $$(".nav-item").forEach((btn) => {
+    const on = btn.dataset.nav === page;
+    btn.classList.toggle("active", on);
+    if (on) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
+  });
+
+  const meta = PAGES[page];
+  els.pageTitle.textContent = meta.title;
+  // dynamic subtitle for stops/routes
+  const r = ROUTES[routeId];
+  if (page === "stops" && r) {
+    els.pageSub.textContent = r.name;
+  } else if (page === "routes" && r) {
+    els.pageSub.textContent = `Active: ${r.short}`;
+  } else if (page === "home" && r) {
+    els.pageSub.textContent = `Via ${r.short}`;
+  } else {
+    els.pageSub.textContent = meta.sub;
+  }
+
+  if (push) {
+    const url = `${location.pathname}${location.search}#${page}`;
+    history.replaceState({ page }, "", url);
+  }
+
+  // scroll page content to top
+  const main = $("#app-main");
+  if (main) main.scrollTop = 0;
+}
+
+function pageFromHash() {
+  const h = (location.hash || "#home").replace("#", "");
+  return PAGES[h] ? h : "home";
+}
+
+/* ---------- Helpers ---------- */
+
 function setStatus(text, kind = "ok") {
-  els.status.innerHTML = `<span class="status-dot"></span><span>${text}</span>`;
+  els.status.innerHTML = `<span class="status-dot"></span><span class="status-txt">${text}</span>`;
   els.status.dataset.kind = kind;
+  els.status.title = text;
 }
 
 function formatTime(iso) {
@@ -87,8 +165,7 @@ function formatHour(iso) {
 function badgeFor(stop) {
   if (stop.tag === "storm" || stop.code >= 95)
     return { cls: "storm", text: "Storm", icon: ui.zap() };
-  if (stop.rainNow)
-    return { cls: "rain", text: "Raining", icon: ui.drop() };
+  if (stop.rainNow) return { cls: "rain", text: "Raining", icon: ui.drop() };
   if (stop.rainingSoon)
     return { cls: "rain-soon", text: "Rain soon", icon: ui.umbrella() };
   if (stop.heat.level === "extreme" || stop.heat.level === "very-hot")
@@ -118,7 +195,11 @@ function applyWeatherScene(summary) {
       fog: "Foggy",
     };
     const iconName =
-      scene === "heavyrain" ? "heavyrain" : scene === "partly" ? "partly" : scene;
+      scene === "heavyrain"
+        ? "heavyrain"
+        : scene === "partly"
+          ? "partly"
+          : scene;
     els.sceneLabel.innerHTML = `${weatherIcon(iconName, { size: "xs" })}<span>${labels[scene] || "Live sky"}</span>`;
   }
   if (els.bannerIcon) {
@@ -131,7 +212,9 @@ function applyWeatherScene(summary) {
       storm: "storm",
       fog: "fog",
     };
-    els.bannerIcon.innerHTML = weatherIcon(map[scene] || "cloud", { size: "lg" });
+    els.bannerIcon.innerHTML = weatherIcon(map[scene] || "cloud", {
+      size: "lg",
+    });
   }
 }
 
@@ -151,6 +234,60 @@ function updateDirectionUi() {
       ? `${iconBadge(ui.building(), "ib-office")}<span>MSC IT Park</span>${iconBadge(ui.arrowRight(), "ib-arrow")}<span>Velachery</span><span class="dir-route">· ${r.short}</span>`
       : `${iconBadge(ui.home(), "ib-home")}<span>Velachery</span>${iconBadge(ui.arrowRight(), "ib-arrow")}<span>MSC IT Park</span><span class="dir-route">· ${r.short}</span>`;
   }
+  renderStopsIntro();
+}
+
+function renderStopsIntro() {
+  if (!els.stopsIntro) return;
+  const r = ROUTES[routeId];
+  const dir = reverseRoute ? "Office → Home" : "Home → Office";
+  els.stopsIntro.innerHTML = `
+    <div class="intro-row">
+      <div class="intro-ico">${routeGlyph(r.id)}</div>
+      <div>
+        <strong>${r.name}</strong>
+        <p>${dir} · ${r.blurb}</p>
+      </div>
+    </div>
+    <button type="button" class="link-btn" data-go="routes">${ui.route()} Change route</button>
+  `;
+  els.stopsIntro.querySelector("[data-go]")?.addEventListener("click", () =>
+    navigate("routes")
+  );
+}
+
+function renderQuickNav(data) {
+  if (!els.quickNav) return;
+  const r = data?.route || ROUTES[routeId];
+  els.quickNav.innerHTML = `
+    <button type="button" class="quick-card glass" data-go="routes">
+      <span class="qc-ico">${ui.route()}</span>
+      <span class="qc-body">
+        <strong>Routes</strong>
+        <span>Switch Koyambedu / Porur / DLF</span>
+      </span>
+      <span class="qc-go">${ui.arrowRight()}</span>
+    </button>
+    <button type="button" class="quick-card glass" data-go="stops">
+      <span class="qc-ico">${ui.list()}</span>
+      <span class="qc-body">
+        <strong>Stops</strong>
+        <span>${r.stops.length} points on ${r.short}</span>
+      </span>
+      <span class="qc-go">${ui.arrowRight()}</span>
+    </button>
+    <button type="button" class="quick-card glass" data-go="tips">
+      <span class="qc-ico">${ui.spark()}</span>
+      <span class="qc-body">
+        <strong>Tips</strong>
+        <span>Umbrella, heat & leave advice</span>
+      </span>
+      <span class="qc-go">${ui.arrowRight()}</span>
+    </button>
+  `;
+  els.quickNav.querySelectorAll("[data-go]").forEach((btn) => {
+    btn.addEventListener("click", () => navigate(btn.dataset.go));
+  });
 }
 
 function renderSummary(data) {
@@ -160,16 +297,19 @@ function renderSummary(data) {
 
   const rainy =
     summary.rainyStops.length > 0
-      ? metaChip(ui.alert(), `Watch: ${summary.rainyStops.join(", ")}`, "warn-chip")
+      ? metaChip(
+          ui.alert(),
+          `Watch: ${summary.rainyStops.join(", ")}`,
+          "warn-chip"
+        )
       : "";
 
   els.summaryMeta.innerHTML = `
-    ${metaChip(ui.home(), `Home ${summary.homeTemp?.toFixed(1) ?? "—"}°C`, "chip-home")}
+    ${metaChip(ui.home(), `${summary.homeTemp?.toFixed(1) ?? "—"}°C`, "chip-home")}
     <span class="flow-arrow">${ui.arrowRight()}</span>
     ${metaChip(ui.mapPin(), `${summary.focusName ?? "Key"} ${summary.focusTemp?.toFixed(1) ?? "—"}°C`, "chip-focus")}
     <span class="flow-arrow">${ui.arrowRight()}</span>
-    ${metaChip(ui.building(), `Office ${summary.officeTemp?.toFixed(1) ?? "—"}°C`, "chip-office")}
-    ${metaChip(ui.thermometer(), `${summary.minTemp.toFixed(0)}–${summary.maxTemp.toFixed(0)}°C`)}
+    ${metaChip(ui.building(), `${summary.officeTemp?.toFixed(1) ?? "—"}°C`, "chip-office")}
     ${metaChip(ui.clock(), formatTime(fetchedAt))}
     ${rainy}
   `;
@@ -189,11 +329,17 @@ function renderSummary(data) {
     els.sunTimes.innerHTML = `
       <span class="sun-chip">${ui.sunrise()}<span>${formatHour(summary.sunrise)}</span></span>
       <span class="sun-chip">${ui.sunset()}<span>${formatHour(summary.sunset)}</span></span>
-      <span class="route-pill">${routeGlyph(route.id)}<span>${route.short}</span></span>
+      <button type="button" class="route-pill as-btn" data-go="routes">${routeGlyph(route.id)}<span>${route.short}</span></button>
     `;
+    els.sunTimes
+      .querySelector("[data-go]")
+      ?.addEventListener("click", () => navigate("routes"));
   }
 
   applyWeatherScene(summary);
+  if (currentPage === "home") {
+    els.pageSub.textContent = `Via ${route.short}`;
+  }
 }
 
 function renderLeave(data) {
@@ -248,27 +394,29 @@ function renderFocusCard(data) {
       <span class="cond-text">${stop.text}</span>
       ${metaChip(ui.thermometer(), `Feels ${stop.feelsLike.toFixed(0)}°`)}
       ${metaChip(ui.wind(), `${stop.wind.toFixed(0)} km/h`)}
-      ${metaChip(ui.drop(), `${stop.humidity}%`)}
       ${
         stop.rainNow
-          ? metaChip(ui.drop(), `${stop.rain.toFixed(1)} mm now`, "rain-amt")
+          ? metaChip(ui.drop(), `${stop.rain.toFixed(1)} mm`, "rain-amt")
           : ""
       }
       ${
         nextRain && !stop.rainNow
-          ? metaChip(ui.clock(), `Wet ~${formatHour(nextRain.time)} (${nextRain.pop ?? "—"}%)`, "rain-amt")
+          ? metaChip(ui.clock(), `Wet ~${formatHour(nextRain.time)}`, "rain-amt")
           : ""
       }
     </div>
-    ${stop.tip ? `<p class="focus-tip">${ui.mapPin()} ${stop.tip}</p>` : ""}
+    <button type="button" class="link-btn block" data-go="stops">${ui.list()} Full stop list</button>
   `;
+  els.focusCard
+    .querySelector("[data-go]")
+    ?.addEventListener("click", () => navigate("stops"));
 }
 
 function renderTips(data) {
   if (!els.tips) return;
   els.tips.innerHTML = `
     <div class="section-head">
-      <h3 class="tips-title">${ui.spark()} Premium tips <span class="free-tag">free</span></h3>
+      <h3 class="tips-title">${ui.spark()} Commute tips <span class="free-tag">free</span></h3>
     </div>
     <ul class="tips-list">
       ${data.tips
@@ -342,20 +490,13 @@ function renderRoute(data) {
             ${metaChip(ui.drop(), `${stop.humidity}%`)}
             ${metaChip(ui.wind(), `${stop.wind.toFixed(0)} km/h`)}
             ${metaChip(ui.sunSmall(), `UV ${stop.uv ?? "—"}`)}
-            ${
-              stop.rainNow
-                ? metaChip(ui.drop(), `${stop.rain.toFixed(1)} mm`, "rain-amt")
-                : ""
-            }
           </div>
           ${
             stop.tip && isFocus
               ? `<p class="focus-tip inline-tip">${ui.mapPin()} ${stop.tip}</p>`
               : ""
           }
-          <div class="hourly">
-            ${hours}
-          </div>
+          <div class="hourly">${hours}</div>
         </div>
       </article>`;
     })
@@ -390,6 +531,7 @@ function renderCompare(compare) {
         })
         .join("")}
     </div>
+    <button type="button" class="link-btn block mt" data-go="stops">${ui.list()} View stops on selected route</button>
   `;
 
   els.compare.querySelectorAll("[data-route]").forEach((btn) => {
@@ -397,6 +539,9 @@ function renderCompare(compare) {
       selectRoute(btn.getAttribute("data-route"));
     });
   });
+  els.compare
+    .querySelector("[data-go]")
+    ?.addEventListener("click", () => navigate("stops"));
 }
 
 function updateCountdown() {
@@ -426,12 +571,13 @@ async function selectRoute(id) {
   savePrefs({ routeId });
   els.routeSelect.value = routeId;
   updateDirectionUi();
+  navigate(currentPage, { push: false }); // refresh subtitle
   await loadWeather({ silent: false });
   if (lastCompare) renderCompare(lastCompare);
 }
 
 async function loadWeather({ silent = false } = {}) {
-  if (!silent) setStatus("Fetching live weather…", "loading");
+  if (!silent) setStatus("Updating…", "loading");
   els.refreshBtn.disabled = true;
   els.refreshBtn.classList.add("is-spinning");
   try {
@@ -442,10 +588,11 @@ async function loadWeather({ silent = false } = {}) {
     renderFocusCard(data);
     renderTips(data);
     renderRoute(data);
-    setStatus(`Live · ${data.route.short} · Open-Meteo`, "ok");
+    renderQuickNav(data);
+    setStatus("Live", "ok");
   } catch (err) {
     console.error(err);
-    setStatus(err?.message || "Could not load weather.", "error");
+    setStatus("Error", "error");
     throw err;
   } finally {
     els.refreshBtn.disabled = false;
@@ -453,15 +600,12 @@ async function loadWeather({ silent = false } = {}) {
   }
 }
 
-async function loadCompare({ silent = true } = {}) {
+async function loadCompare() {
   try {
     const compare = await fetchRouteCompare();
     renderCompare(compare);
   } catch (err) {
     console.error("compare", err);
-    if (!silent && els.compare) {
-      els.compare.innerHTML = `<p class="compare-error">Route compare unavailable right now.</p>`;
-    }
   }
 }
 
@@ -475,14 +619,31 @@ async function loadAll({ silent = false } = {}) {
     updateCountdown();
     timerId = setTimeout(() => loadAll({ silent: true }), 60_000);
   }
-  loadCompare({ silent: true });
+  loadCompare();
+}
+
+function wireNav() {
+  $$(".nav-item").forEach((btn) => {
+    const ico = btn.querySelector(".nav-ico");
+    const map = {
+      home: ui.home(),
+      routes: ui.route(),
+      stops: ui.list(),
+      tips: ui.spark(),
+    };
+    if (ico) ico.innerHTML = map[btn.dataset.nav] || ui.grid();
+    btn.addEventListener("click", () => navigate(btn.dataset.nav));
+  });
+
+  window.addEventListener("hashchange", () => {
+    navigate(pageFromHash(), { push: false });
+  });
 }
 
 function wireUi() {
-  // Icon-enhanced static chrome
-  if (els.refreshBtn) {
-    els.refreshBtn.innerHTML = `${ui.refresh()}<span>Refresh</span>`;
-  }
+  wireNav();
+
+  els.refreshBtn.innerHTML = ui.refresh();
   if (els.dirHome) {
     els.dirHome.innerHTML = `${ui.home()}<span>Home → Office</span>`;
   }
@@ -491,13 +652,18 @@ function wireUi() {
   }
 
   const brandIcon = $("#brand-icon");
-  if (brandIcon) brandIcon.innerHTML = weatherIcon("partly", { size: "md" });
+  if (brandIcon) brandIcon.innerHTML = weatherIcon("partly", { size: "sm" });
 
   const selectWrapIcon = $("#route-field-icon");
   if (selectWrapIcon) selectWrapIcon.innerHTML = ui.route();
 
   renderRouteSelect();
   updateDirectionUi();
+  renderQuickNav();
+
+  // restore page from hash or prefs
+  const initial = pageFromHash() !== "home" ? pageFromHash() : currentPage;
+  navigate(initial, { push: true });
 
   els.routeSelect.addEventListener("change", (e) => {
     selectRoute(e.target.value);

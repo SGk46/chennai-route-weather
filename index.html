@@ -2,13 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
-      content="Modern personal Chennai commute weather: Velachery to MSC IT Park via Koyambedu, Porur Bypass, or DLF. Free Open-Meteo."
+      content="Chennai commute weather app: Velachery ↔ MSC IT Park Ambattur. Routes, stops, tips. Free Open-Meteo."
     />
     <meta name="theme-color" content="#070b16" />
-    <title>Chennai Route Weather · Velachery ↔ MSC Ambattur</title>
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Chennai Route Weather</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -22,7 +23,7 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='12' fill='%23FFB84D'/%3E%3Cpath fill='%23E8EEF8' d='M18 40c0-6 4.5-10 10.5-10 1.2 0 2.4.2 3.5.6A9 9 0 0 1 48 40H18z'/%3E%3C/svg%3E"
     />
   </head>
-  <body data-scene="cloud" data-day="day">
+  <body data-scene="cloud" data-day="day" data-page="home">
     <div class="weather-scene" id="weather-scene" aria-hidden="true">
       <div class="sky-gradient"></div>
       <div class="sun-orb"></div>
@@ -38,94 +39,131 @@
       <div class="noise-overlay"></div>
     </div>
 
-    <div class="app">
-      <header class="top glass-bar">
-        <div class="brand">
-          <div class="brand-mark" id="brand-icon" aria-hidden="true"></div>
-          <div>
-            <p class="eyebrow">Personal commute</p>
-            <h1>Chennai Route Weather</h1>
-            <p class="brand-sub">
-              <strong>Velachery</strong>
-              <span class="swap">↔</span>
-              <strong>MSC IT Park</strong>
-            </p>
+    <div class="app-shell">
+      <!-- Compact top bar -->
+      <header class="app-bar glass-bar">
+        <div class="app-bar-left">
+          <div class="brand-mark sm" id="brand-icon" aria-hidden="true"></div>
+          <div class="app-bar-titles">
+            <h1 id="page-title">Home</h1>
+            <p id="page-sub">Velachery ↔ MSC IT Park</p>
           </div>
         </div>
-        <button type="button" id="refresh-btn" class="primary btn-icon">
-          Refresh
-        </button>
+        <div class="app-bar-actions">
+          <span class="live-pill" id="status" data-kind="loading">…</span>
+          <button type="button" id="refresh-btn" class="icon-btn primary" title="Refresh" aria-label="Refresh weather"></button>
+        </div>
       </header>
 
-      <section class="controls glass" aria-label="Route controls">
-        <label class="field">
-          <span class="field-label">
-            <span id="route-field-icon" class="field-ico" aria-hidden="true"></span>
-            Choose route
-          </span>
-          <div class="select-shell">
-            <select id="route-select" class="route-select" aria-label="Select commute route"></select>
+      <!-- Scrollable page stack -->
+      <main class="app-main" id="app-main">
+        <!-- HOME -->
+        <section class="page" id="page-home" data-page="home" aria-label="Home dashboard">
+          <div class="status-mini">
+            <span id="countdown" class="countdown">—</span>
+            <span class="scene-label" id="scene-label">Live sky</span>
           </div>
-        </label>
 
-        <div class="field">
-          <span class="field-label">Two-way direction</span>
-          <div class="dir-toggle" role="group" aria-label="Commute direction">
-            <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
-            <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
+          <div class="hero-stats">
+            <div class="comfort-ring" id="comfort-ring" style="--p: 0">
+              <span class="ring-val">—</span>
+              <span class="ring-lbl">Comfort</span>
+            </div>
+            <div class="sun-times" id="sun-times"></div>
           </div>
-        </div>
 
-        <p class="control-hint">
-          Switch full corridor view: <strong>Koyambedu</strong>,
-          <strong>Porur Bypass</strong>, or <strong>DLF</strong>.
-        </p>
-      </section>
+          <section class="banner glass tone-ok" id="banner" aria-live="polite">
+            <div class="banner-layout">
+              <div class="banner-icon" id="banner-icon" aria-hidden="true"></div>
+              <div class="banner-copy">
+                <h2 id="headline">Loading…</h2>
+                <div id="summary-meta" class="summary-meta">Connecting…</div>
+              </div>
+            </div>
+          </section>
 
-      <div class="status-row">
-        <span id="status" data-kind="loading">Starting…</span>
-        <span id="countdown" class="countdown">—</span>
-        <span class="scene-label" id="scene-label">Live sky</span>
-      </div>
+          <section class="leave-card glass" id="leave-card" hidden></section>
+          <section class="focus-card glass" id="focus-card" hidden></section>
 
-      <div class="hero-stats">
-        <div class="comfort-ring" id="comfort-ring" style="--p: 0">
-          <span class="ring-val">—</span>
-          <span class="ring-lbl">Comfort</span>
-        </div>
-        <div class="sun-times" id="sun-times"></div>
-      </div>
+          <div class="quick-nav" id="quick-nav" aria-label="Quick links"></div>
+        </section>
 
-      <section class="banner glass tone-ok" id="banner" aria-live="polite">
-        <div class="banner-layout">
-          <div class="banner-icon" id="banner-icon" aria-hidden="true"></div>
-          <div class="banner-copy">
-            <h2 id="headline">Loading route weather…</h2>
-            <div id="summary-meta" class="summary-meta">Connecting to free Open-Meteo…</div>
-          </div>
-        </div>
-      </section>
+        <!-- ROUTES -->
+        <section class="page" id="page-routes" data-page="routes" hidden aria-label="Routes">
+          <section class="controls glass">
+            <label class="field">
+              <span class="field-label">
+                <span id="route-field-icon" class="field-ico" aria-hidden="true"></span>
+                Choose route
+              </span>
+              <div class="select-shell">
+                <select id="route-select" class="route-select" aria-label="Select commute route"></select>
+              </div>
+            </label>
 
-      <section class="leave-card glass" id="leave-card" hidden></section>
-      <section class="focus-card glass" id="focus-card" hidden></section>
-      <section class="compare" id="compare" aria-label="Compare routes"></section>
-      <section class="tips" id="tips" aria-label="Commute tips"></section>
+            <div class="field">
+              <span class="field-label">Two-way direction</span>
+              <div class="dir-toggle" role="group" aria-label="Commute direction">
+                <button type="button" id="dir-home" class="dir-btn active">Home → Office</button>
+                <button type="button" id="dir-office" class="dir-btn">Office → Home</button>
+              </div>
+            </div>
 
-      <div class="direction-line" id="direction">Velachery → MSC IT Park</div>
+            <p class="control-hint">
+              Pick a corridor, then open <strong>Stops</strong> for the full list.
+            </p>
+          </section>
 
-      <main class="route" id="route" aria-label="Selected route stops"></main>
+          <div class="direction-line" id="direction">Velachery → MSC IT Park</div>
+          <section class="compare" id="compare" aria-label="Compare routes"></section>
+        </section>
 
-      <footer class="footer glass">
-        <p>
-          Personal use ·
-          <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank">Open-Meteo</a>
-          (free, no API key) · Auto-refresh <strong>10 min</strong>
-        </p>
-        <p>
-          Modern icons & glass UI are free SVG/CSS — no paid services or subscriptions.
-        </p>
-      </footer>
+        <!-- STOPS -->
+        <section class="page" id="page-stops" data-page="stops" hidden aria-label="Stops along route">
+          <div class="page-intro glass" id="stops-intro"></div>
+          <div class="route" id="route" aria-label="Selected route stops"></div>
+        </section>
+
+        <!-- TIPS -->
+        <section class="page" id="page-tips" data-page="tips" hidden aria-label="Tips and about">
+          <section class="tips" id="tips" aria-label="Commute tips"></section>
+          <footer class="footer glass">
+            <p>
+              Personal use ·
+              <a href="https://open-meteo.com/" rel="noopener noreferrer" target="_blank">Open-Meteo</a>
+              (free, no API key) · Auto-refresh <strong>10 min</strong>
+            </p>
+            <p>
+              Icons &amp; UI are free SVG/CSS. Routes are approximate map points for personal commuting.
+            </p>
+            <p class="footer-path">
+              Home: Velachery · Destination: MSC IT Park, Ambattur
+            </p>
+          </footer>
+        </section>
+      </main>
+
+      <!-- Bottom navigation -->
+      <nav class="bottom-nav glass-bar" aria-label="Main navigation">
+        <button type="button" class="nav-item active" data-nav="home" aria-current="page">
+          <span class="nav-ico" data-ico="home"></span>
+          <span class="nav-lbl">Home</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="routes">
+          <span class="nav-ico" data-ico="routes"></span>
+          <span class="nav-lbl">Routes</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="stops">
+          <span class="nav-ico" data-ico="stops"></span>
+          <span class="nav-lbl">Stops</span>
+        </button>
+        <button type="button" class="nav-item" data-nav="tips">
+          <span class="nav-ico" data-ico="tips"></span>
+          <span class="nav-lbl">Tips</span>
+        </button>
+      </nav>
     </div>
+
     <script type="module" src="js/app.js"></script>
   </body>
 </html>

@@ -27,15 +27,29 @@ Pick a corridor from the **dropdown** — each shows its own stop list:
 | Stack | Static HTML + CSS + vanilla JS |
 | Cost | **₹0** — no subscriptions |
 
+## App navigation (not one long page)
+
+Bottom tabs keep each screen simple:
+
+| Tab | What’s there |
+|-----|----------------|
+| **Home** | Live overview, comfort, smart leave, key stretch, shortcuts |
+| **Routes** | Dropdown (Koyambedu / Porur / DLF), two-way direction, compare |
+| **Stops** | Full stop timeline + hourly for the selected route |
+| **Tips** | Commute tips + about |
+
+URL hash works too: `#home` `#routes` `#stops` `#tips`.
+
 ## “Premium-style” features (all free)
 
+- Multi-page shell + bottom nav  
 - Route **dropdown** with full stop lists per corridor  
 - **Two-way** direction toggle (saved in browser)  
 - **Route compare** cards + “best right now”  
 - **Comfort score** (0–100) for the selected path  
 - **Smart leave** window from hourly rain  
 - **3D-style weather sky** (sun, clouds, rain, storm, fog — CSS only)  
-- Glass UI, focus card, commute tips  
+- Rich SVG icons + glass UI  
 - Sunrise / sunset  
 
 ## Run locally
