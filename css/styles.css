@@ -1347,15 +1347,19 @@ body[data-day="night"] .sky-orb {
 }
 
 /* ---------- DESKTOP / FULL PAGE ---------- */
-/* Applied when body[data-viewport="desktop"] (auto ≥900px or forced) */
+/* Use html[data-viewport] so early bootstrap (before body) works */
 
-body[data-viewport="desktop"] {
-  overflow: hidden;
+html[data-viewport="desktop"],
+html[data-viewport="desktop"] body {
+  overflow: auto;
+  height: 100%;
 }
 
-body[data-viewport="desktop"] .shell {
+html[data-viewport="desktop"] .shell {
   max-width: none;
   width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   height: 100vh;
   height: 100dvh;
   margin: 0;
@@ -1363,7 +1367,16 @@ body[data-viewport="desktop"] .shell {
   overflow: hidden;
 }
 
-body[data-viewport="desktop"] .sidebar {
+.layout-link {
+  color: var(--marina);
+  font-weight: 650;
+  text-decoration: none;
+}
+.layout-link:hover {
+  text-decoration: underline;
+}
+
+html[data-viewport="desktop"] .sidebar {
   display: flex;
   flex-direction: column;
   width: 240px;
@@ -1374,27 +1387,27 @@ body[data-viewport="desktop"] .sidebar {
   gap: 1.25rem;
 }
 
-body[data-viewport="desktop"] .sidebar-brand {
+html[data-viewport="desktop"] .sidebar-brand {
   display: flex;
   gap: 0.75rem;
   align-items: center;
   padding: 0.25rem 0.35rem;
 }
 
-body[data-viewport="desktop"] .sidebar-brand strong {
+html[data-viewport="desktop"] .sidebar-brand strong {
   display: block;
   font-size: 0.95rem;
   letter-spacing: -0.02em;
 }
 
-body[data-viewport="desktop"] .side-nav {
+html[data-viewport="desktop"] .side-nav {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   flex: 1;
 }
 
-body[data-viewport="desktop"] .side-link {
+html[data-viewport="desktop"] .side-link {
   font: inherit;
   display: flex;
   align-items: center;
@@ -1411,33 +1424,33 @@ body[data-viewport="desktop"] .side-link {
   cursor: pointer;
 }
 
-body[data-viewport="desktop"] .side-link .tab-ico .icon {
+html[data-viewport="desktop"] .side-link .tab-ico .icon {
   width: 1.15rem;
   height: 1.15rem;
 }
 
-body[data-viewport="desktop"] .side-link:hover {
+html[data-viewport="desktop"] .side-link:hover {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
 }
 
-body[data-viewport="desktop"] .side-link.active {
+html[data-viewport="desktop"] .side-link.active {
   background: var(--marina-soft);
   border-color: rgba(61, 155, 233, 0.3);
   color: var(--text);
 }
 
-body[data-viewport="desktop"] .side-link.active .tab-ico {
+html[data-viewport="desktop"] .side-link.active .tab-ico {
   color: var(--marina);
 }
 
-body[data-viewport="desktop"] .sidebar-foot {
+html[data-viewport="desktop"] .sidebar-foot {
   margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px solid var(--line);
 }
 
-body[data-viewport="desktop"] .layout-label {
+html[data-viewport="desktop"] .layout-label {
   margin: 0 0 0.4rem;
   font-size: 0.68rem;
   font-weight: 750;
@@ -1446,34 +1459,34 @@ body[data-viewport="desktop"] .layout-label {
   color: var(--muted);
 }
 
-body[data-viewport="desktop"] .sidebar-hint {
+html[data-viewport="desktop"] .sidebar-hint {
   margin: 0.55rem 0 0;
   font-size: 0.72rem;
   color: var(--muted);
   line-height: 1.35;
 }
 
-body[data-viewport="desktop"] .sidebar .layout-switch {
+html[data-viewport="desktop"] .sidebar .layout-switch {
   width: 100%;
 }
 
-body[data-viewport="desktop"] .sidebar .layout-btn {
+html[data-viewport="desktop"] .sidebar .layout-btn {
   flex: 1;
 }
 
-body[data-viewport="desktop"] .mobile-layout-switch {
+html[data-viewport="desktop"] .mobile-layout-switch {
   display: none;
 }
 
-body[data-viewport="desktop"] .mobile-only {
+html[data-viewport="desktop"] .mobile-only {
   display: none;
 }
 
-body[data-viewport="desktop"] .tabbar {
+html[data-viewport="desktop"] .tabbar {
   display: none;
 }
 
-body[data-viewport="desktop"] .workspace {
+html[data-viewport="desktop"] .workspace {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -1481,139 +1494,139 @@ body[data-viewport="desktop"] .workspace {
   height: 100%;
 }
 
-body[data-viewport="desktop"] .topbar {
+html[data-viewport="desktop"] .topbar {
   padding: 1.1rem 1.75rem 0.75rem;
   border-bottom: 1px solid var(--line);
   background: rgba(12, 26, 46, 0.45);
   flex-shrink: 0;
 }
 
-body[data-viewport="desktop"] .topbar h1 {
+html[data-viewport="desktop"] .topbar h1 {
   font-size: 1.65rem;
 }
 
-body[data-viewport="desktop"] .topbar-sub {
+html[data-viewport="desktop"] .topbar-sub {
   display: block;
 }
 
-body[data-viewport="desktop"] .content {
+html[data-viewport="desktop"] .content {
   flex: 1;
   overflow-y: auto;
   padding: 1.25rem 1.75rem 1.75rem;
   max-width: none;
 }
 
-body[data-viewport="desktop"] .page {
+html[data-viewport="desktop"] .page {
   max-width: 1280px;
 }
 
 /* Now — full dashboard grid */
-body[data-viewport="desktop"] .now-layout {
+html[data-viewport="desktop"] .now-layout {
   display: grid;
   grid-template-columns: 1.45fr 1fr;
   gap: 1.15rem;
   align-items: start;
 }
 
-body[data-viewport="desktop"] .path-card {
+html[data-viewport="desktop"] .path-card {
   min-height: 220px;
 }
 
-body[data-viewport="desktop"] .path-map {
+html[data-viewport="desktop"] .path-map {
   padding: 0.75rem 0.5rem 0.85rem;
 }
 
-body[data-viewport="desktop"] .path-svg {
+html[data-viewport="desktop"] .path-svg {
   min-width: 0;
   min-height: 160px;
 }
 
-body[data-viewport="desktop"] .now-grid {
+html[data-viewport="desktop"] .now-grid {
   grid-template-columns: 0.85fr 1.15fr;
   gap: 0.85rem;
 }
 
-body[data-viewport="desktop"] .now-grid .card {
+html[data-viewport="desktop"] .now-grid .card {
   min-height: 8.5rem;
 }
 
-body[data-viewport="desktop"] .comfort-big {
+html[data-viewport="desktop"] .comfort-big {
   font-size: 3rem;
 }
 
-body[data-viewport="desktop"] .hero-wx h2 {
+html[data-viewport="desktop"] .hero-wx h2 {
   font-size: 1.2rem;
 }
 
-body[data-viewport="desktop"] .action-row {
+html[data-viewport="desktop"] .action-row {
   margin-top: 0.25rem;
 }
 
 /* Routes — full width 3-up */
-body[data-viewport="desktop"] .routes-layout {
+html[data-viewport="desktop"] .routes-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 1.15rem;
   align-items: start;
 }
 
-body[data-viewport="desktop"] .routes-dir-card {
+html[data-viewport="desktop"] .routes-dir-card {
   position: sticky;
   top: 0.5rem;
 }
 
-body[data-viewport="desktop"] .route-cards {
+html[data-viewport="desktop"] .route-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.85rem;
 }
 
-body[data-viewport="desktop"] .r-card {
+html[data-viewport="desktop"] .r-card {
   min-height: 200px;
   transition: transform 0.15s var(--ease), border-color 0.15s;
 }
 
-body[data-viewport="desktop"] .r-card:hover {
+html[data-viewport="desktop"] .r-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.16);
 }
 
 /* More — two columns */
-body[data-viewport="desktop"] .more-layout {
+html[data-viewport="desktop"] .more-layout {
   display: grid;
   grid-template-columns: 1.2fr 0.9fr;
   gap: 1.25rem;
   align-items: start;
 }
 
-body[data-viewport="desktop"] .sticky-col {
+html[data-viewport="desktop"] .sticky-col {
   position: sticky;
   top: 0.5rem;
 }
 
-body[data-viewport="desktop"] .card {
+html[data-viewport="desktop"] .card {
   border-radius: 20px;
 }
 
 /* Wide desktop */
 @media (min-width: 1200px) {
-  body[data-viewport="desktop"] .sidebar {
+  html[data-viewport="desktop"] .sidebar {
     width: 260px;
     padding: 1.5rem 1.15rem;
   }
 
-  body[data-viewport="desktop"] .content {
+  html[data-viewport="desktop"] .content {
     padding: 1.5rem 2.25rem 2rem;
   }
 
-  body[data-viewport="desktop"] .now-layout {
+  html[data-viewport="desktop"] .now-layout {
     grid-template-columns: 1.55fr 1fr;
     gap: 1.35rem;
   }
 }
 
 /* Force mobile layout even on wide screens */
-body[data-viewport="mobile"] .shell {
+html[data-viewport="mobile"] .shell {
   max-width: 440px;
   margin: 0 auto;
   flex-direction: column;
@@ -1623,19 +1636,19 @@ body[data-viewport="mobile"] .shell {
   overflow: visible;
 }
 
-body[data-viewport="mobile"] .sidebar {
+html[data-viewport="mobile"] .sidebar {
   display: none;
 }
 
-body[data-viewport="mobile"] .tabbar {
+html[data-viewport="mobile"] .tabbar {
   display: grid;
 }
 
-body[data-viewport="mobile"] .mobile-layout-switch {
+html[data-viewport="mobile"] .mobile-layout-switch {
   display: inline-flex;
 }
 
-body[data-viewport="mobile"] {
+html[data-viewport="mobile"] {
   overflow-x: hidden;
   overflow-y: auto;
 }

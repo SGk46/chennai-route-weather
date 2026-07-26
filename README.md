@@ -35,8 +35,17 @@ One app, two layouts (switch anytime):
 | **Desktop** | Wide screen, or force **D** | Full-page dashboard, left sidebar, multi-column |
 | **Auto** | Default | ≥900px → desktop, else mobile |
 
-Toggle: **A / M / D** in the header (mobile) or **Layout** in the sidebar (desktop).  
-Or URL: `?layout=mobile` · `?layout=desktop` · `?layout=auto`
+Toggle in the UI: **Auto · Phone · Full**  
+Or open these (clearest on GitHub Pages):
+
+| Version | URL |
+|---------|-----|
+| Auto | https://sgk46.github.io/chennai-route-weather/ |
+| Phone | https://sgk46.github.io/chennai-route-weather/mobile.html |
+| Full page | https://sgk46.github.io/chennai-route-weather/desktop.html |
+
+Also: `?layout=mobile` · `?layout=desktop` · `?layout=auto`  
+Always use the **trailing slash** on the folder URL.
 
 ## Navigation
 

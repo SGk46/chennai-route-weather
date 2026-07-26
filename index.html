@@ -10,20 +10,65 @@
     <meta name="theme-color" content="#0c1a2e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <title>Chennai Commute · Velachery ↔ MSC</title>
+    <!-- Fix GH Pages relative paths when URL has no trailing slash -->
+    <script>
+      (function () {
+        var p = location.pathname;
+        if (!p.endsWith("/") && !/\.html?$/i.test(p)) {
+          location.replace(p + "/" + location.search + location.hash);
+          return;
+        }
+        // Early layout so first paint matches ?layout= / saved pref
+        try {
+          var q = new URLSearchParams(location.search).get("layout");
+          var layout = "auto";
+          if (q === "mobile" || q === "desktop" || q === "auto") layout = q;
+          else {
+            var raw = localStorage.getItem("chennai-route-weather:v5");
+            if (raw) {
+              var j = JSON.parse(raw);
+              if (j && (j.layout === "mobile" || j.layout === "desktop" || j.layout === "auto"))
+                layout = j.layout;
+            }
+          }
+          var wide = window.matchMedia("(min-width: 900px)").matches;
+          var vp =
+            layout === "desktop" || (layout === "auto" && wide)
+              ? "desktop"
+              : "mobile";
+          document.documentElement.setAttribute("data-viewport", vp);
+          document.documentElement.setAttribute("data-layout", layout);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css" />
+    <!-- cache-bust so Pages/CDN serves latest layout CSS -->
+    <link rel="stylesheet" href="css/styles.css?v=6" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='28' r='12' fill='%23F0A830'/%3E%3Cpath fill='%237EB8E8' d='M18 40c0-6 4.5-10 10.5-10 1.2 0 2.4.2 3.5.6A9 9 0 0 1 48 40H18z'/%3E%3C/svg%3E"
     />
+    <style>
+      /* minimal paint before main CSS */
+      html[data-viewport="desktop"] body { margin: 0; background: #0c1a2e; color: #f3f7fc; }
+    </style>
   </head>
   <body data-scene="cloud" data-day="day" data-page="now" data-viewport="mobile" data-layout="auto">
+    <script>
+      // Mirror early html attrs onto body immediately
+      (function () {
+        var vp = document.documentElement.getAttribute("data-viewport");
+        var ly = document.documentElement.getAttribute("data-layout");
+        if (vp) document.body.setAttribute("data-viewport", vp);
+        if (ly) document.body.setAttribute("data-layout", ly);
+      })();
+    </script>
     <div class="sky" id="sky" aria-hidden="true">
       <div class="sky-wash"></div>
       <div class="sky-orb"></div>
@@ -56,11 +101,15 @@
         <div class="sidebar-foot">
           <p class="layout-label">Layout</p>
           <div class="layout-switch" role="group" aria-label="Layout version">
-            <button type="button" class="layout-btn" data-layout-set="auto">Auto</button>
-            <button type="button" class="layout-btn" data-layout-set="mobile">Mobile</button>
-            <button type="button" class="layout-btn" data-layout-set="desktop">Desktop</button>
+            <button type="button" class="layout-btn" data-layout-set="auto" title="Follow screen size">Auto</button>
+            <button type="button" class="layout-btn" data-layout-set="mobile" title="Phone layout">Phone</button>
+            <button type="button" class="layout-btn" data-layout-set="desktop" title="Full page layout">Full</button>
           </div>
-          <p class="sidebar-hint">Desktop = full page · Mobile = phone cockpit</p>
+          <p class="sidebar-hint">
+            Direct links:<br />
+            <a class="layout-link" href="./mobile.html">mobile.html</a> ·
+            <a class="layout-link" href="./desktop.html">desktop.html</a>
+          </p>
         </div>
       </aside>
 
@@ -73,9 +122,9 @@
           </div>
           <div class="topbar-actions">
             <div class="layout-switch mobile-layout-switch" role="group" aria-label="Layout version">
-              <button type="button" class="layout-btn" data-layout-set="auto" title="Auto">A</button>
-              <button type="button" class="layout-btn" data-layout-set="mobile" title="Mobile">M</button>
-              <button type="button" class="layout-btn" data-layout-set="desktop" title="Desktop">D</button>
+              <button type="button" class="layout-btn" data-layout-set="auto" title="Auto">Auto</button>
+              <button type="button" class="layout-btn" data-layout-set="mobile" title="Phone">Phone</button>
+              <button type="button" class="layout-btn" data-layout-set="desktop" title="Full page">Full</button>
             </div>
             <span class="live" id="status" data-kind="loading">…</span>
             <button type="button" id="refresh-btn" class="btn-icon" title="Refresh" aria-label="Refresh"></button>
@@ -198,6 +247,12 @@
       </nav>
     </div>
 
-    <script type="module" src="js/app.js"></script>
+    <noscript>
+      <p style="padding:1rem;color:#fff;background:#0c1a2e">
+        JavaScript is required for live weather. Enable JS, then open
+        <a href="./">this app</a>.
+      </p>
+    </noscript>
+    <script type="module" src="js/app.js?v=6"></script>
   </body>
 </html>

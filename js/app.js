@@ -56,10 +56,19 @@ const prefs = loadPrefs();
 let routeId = ROUTES[prefs.routeId] ? prefs.routeId : "porur";
 let reverseRoute = !!prefs.reverseRoute;
 let currentPage = PAGES[prefs.page] ? prefs.page : "now";
+
+/** URL ?layout= wins over localStorage */
+function readLayoutFromUrl() {
+  const q = new URLSearchParams(location.search).get("layout");
+  if (q === "mobile" || q === "desktop" || q === "auto") return q;
+  return null;
+}
+
 /** auto | mobile | desktop — user preference */
-let layoutPref = ["auto", "mobile", "desktop"].includes(prefs.layout)
-  ? prefs.layout
-  : "auto";
+let layoutPref =
+  readLayoutFromUrl() ||
+  (["auto", "mobile", "desktop"].includes(prefs.layout) ? prefs.layout : "auto");
+
 let lastPayload = null;
 let lastCompare = null;
 let timerId = null;
@@ -85,6 +94,8 @@ function applyViewport() {
   const vp = resolveViewport();
   document.body.dataset.viewport = vp;
   document.body.dataset.layout = layoutPref;
+  document.documentElement.dataset.viewport = vp;
+  document.documentElement.dataset.layout = layoutPref;
 
   $$("[data-layout-set]").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.layoutSet === layoutPref);
@@ -94,10 +105,20 @@ function applyViewport() {
   if (lastPayload) renderPathMap(lastPayload);
 }
 
-function setLayoutPref(mode) {
+function setLayoutPref(mode, { updateUrl = true } = {}) {
   if (!["auto", "mobile", "desktop"].includes(mode)) return;
   layoutPref = mode;
   savePrefs({ layout: mode });
+  if (updateUrl) {
+    try {
+      const u = new URL(location.href);
+      u.searchParams.set("layout", mode);
+      // keep hash
+      history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+    } catch {
+      /* ignore */
+    }
+  }
   applyViewport();
 }
 
@@ -533,8 +554,10 @@ async function selectRoute(id) {
 
 async function loadWeather({ silent = false } = {}) {
   if (!silent) setStatus("Updating…", "loading");
-  els.refreshBtn.disabled = true;
-  els.refreshBtn.classList.add("is-spinning");
+  if (els.refreshBtn) {
+    els.refreshBtn.disabled = true;
+    els.refreshBtn.classList.add("is-spinning");
+  }
   try {
     const data = await fetchRouteWeather(routeId);
     lastPayload = data;
@@ -549,10 +572,19 @@ async function loadWeather({ silent = false } = {}) {
   } catch (err) {
     console.error(err);
     setStatus("Error", "error");
+    if (els.headline) {
+      els.headline.textContent = "Could not load weather";
+    }
+    if (els.heroMeta) {
+      els.heroMeta.textContent =
+        err?.message || "Check internet connection, then tap Refresh.";
+    }
     throw err;
   } finally {
-    els.refreshBtn.disabled = false;
-    els.refreshBtn.classList.remove("is-spinning");
+    if (els.refreshBtn) {
+      els.refreshBtn.disabled = false;
+      els.refreshBtn.classList.remove("is-spinning");
+    }
   }
 }
 
@@ -580,11 +612,19 @@ async function loadAll({ silent = false } = {}) {
 /* ---------- Wire ---------- */
 
 function wireUi() {
+  // Prefer URL layout; persist it so refresh keeps the choice
+  const urlLayout = readLayoutFromUrl();
+  if (urlLayout) {
+    layoutPref = urlLayout;
+    savePrefs({ layout: urlLayout });
+  }
   applyViewport();
 
   els.refreshBtn.innerHTML = ui.refresh();
-  els.dirHome.innerHTML = `${ui.home()}<span>Home → Office</span>`;
-  els.dirOffice.innerHTML = `${ui.building()}<span>Office → Home</span>`;
+  if (els.dirHome)
+    els.dirHome.innerHTML = `${ui.home()}<span>Home → Office</span>`;
+  if (els.dirOffice)
+    els.dirOffice.innerHTML = `${ui.building()}<span>Office → Home</span>`;
 
   const brand = $("#brand-icon");
   if (brand) brand.innerHTML = weatherIcon("partly", { size: "sm" });
@@ -623,23 +663,19 @@ function wireUi() {
   if (DESKTOP_MQ.addEventListener) DESKTOP_MQ.addEventListener("change", onMq);
   else DESKTOP_MQ.addListener(onMq);
 
-  // URL helpers: ?layout=mobile|desktop|auto
-  const q = new URLSearchParams(location.search).get("layout");
-  if (q && ["auto", "mobile", "desktop"].includes(q)) setLayoutPref(q);
-
-  els.dirHome.addEventListener("click", () => {
+  els.dirHome?.addEventListener("click", () => {
     reverseRoute = false;
     savePrefs({ reverseRoute });
     updateDirectionUi();
   });
 
-  els.dirOffice.addEventListener("click", () => {
+  els.dirOffice?.addEventListener("click", () => {
     reverseRoute = true;
     savePrefs({ reverseRoute });
     updateDirectionUi();
   });
 
-  els.refreshBtn.addEventListener("click", () => loadAll({ silent: false }));
+  els.refreshBtn?.addEventListener("click", () => loadAll({ silent: false }));
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && Date.now() >= nextRefreshAt) {
