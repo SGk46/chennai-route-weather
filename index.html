@@ -72,6 +72,9 @@
     <div class="sky" id="sky" aria-hidden="true">
       <div class="sky-wash"></div>
       <div class="sky-orb"></div>
+      <div class="sky-glow sky-glow--one"></div>
+      <div class="sky-glow sky-glow--two"></div>
+      <div class="sky-rain" aria-hidden="true"></div>
     </div>
 
     <div class="shell">
@@ -134,7 +137,13 @@
         <main class="content" id="app-main">
           <!-- NOW -->
           <section class="page is-active" id="page-now" data-page="now">
-            <p class="route-line" id="route-line">Velachery → MSC IT Park</p>
+            <div class="route-hero">
+              <p class="route-line" id="route-line">Velachery → MSC IT Park</p>
+              <div class="route-hero__meta" aria-label="Commute summary">
+                <span>Live corridor</span>
+                <span>10 min refresh</span>
+              </div>
+            </div>
 
             <div class="now-layout">
               <div class="now-primary">
